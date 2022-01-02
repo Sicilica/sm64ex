@@ -156,6 +156,7 @@
     #define BLUE_COIN_SWITCH_ACT_IDLE 0
     #define BLUE_COIN_SWITCH_ACT_RECEDING 1
     #define BLUE_COIN_SWITCH_ACT_TICKING 2
+    #define BLUE_COIN_SWITCH_ACT_RESETTING 3
 
 /* Moving Blue Coin */
     /* oAction */

@@ -47,7 +47,10 @@ void bhv_hidden_blue_coin_loop(void) {
             // After 200 frames of waiting and 20 2-frame blinks (for 240 frames total),
             // delete the object.
             if (cur_obj_wait_then_blink(200, 20)) {
-                obj_mark_for_deletion(o);
+                cur_obj_unhide();
+                cur_obj_disable_rendering();
+                cur_obj_become_intangible();
+                o->oAction = HIDDEN_BLUE_COIN_ACT_WAITING;
             }
 
             break;
@@ -94,8 +97,6 @@ void bhv_blue_coin_switch_loop(void) {
 
                 // Set to BLUE_COIN_SWITCH_ACT_TICKING
                 o->oAction++;
-                // ???
-                o->oPosY = gMarioObject->oPosY - 40.0f;
 
                 // Spawn particles. There's a function that calls this same function
                 // with the same arguments, spawn_mist_particles, why didn't they just call that?
@@ -118,8 +119,23 @@ void bhv_blue_coin_switch_loop(void) {
 
             // Delete the switch (which stops the sound) after the last coin is collected,
             // or after the coins unload after the 240-frame timer expires.
-            if (cur_obj_nearest_object_with_behavior(bhvHiddenBlueCoin) == NULL || o->oTimer > 240) {
+            if (cur_obj_nearest_object_with_behavior(bhvHiddenBlueCoin) == NULL) {
                 obj_mark_for_deletion(o);
+            } else if (o->oTimer > 240) {
+                o->oAction++;
+                cur_obj_unhide();
+                o->oVelY = 20.0f;
+            }
+
+            break;
+        case BLUE_COIN_SWITCH_ACT_RESETTING:
+            if (o->oTimer > 5) {
+                o->oAction = BLUE_COIN_SWITCH_ACT_IDLE;
+            } else {
+                // Have collision while resetting
+                load_object_collision_model();
+                // Reset to original position
+                cur_obj_move_using_fvel_and_gravity();
             }
 
             break;
