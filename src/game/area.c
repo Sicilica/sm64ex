@@ -24,6 +24,8 @@
 
 #include "gfx_dimensions.h"
 
+#include "pc/bingo/bingo.h"
+
 struct SpawnInfo gPlayerSpawnInfos[1];
 struct GraphNode *D_8033A160[0x100];
 struct Area gAreaData[8];
@@ -389,6 +391,9 @@ void render_game(void) {
         if (gPauseScreenMode != 0) {
             gSaveOptSelectIndex = gPauseScreenMode;
         }
+
+        handle_bingo_input();
+        render_bingo_board();
 
         if (D_8032CE78 != NULL) {
             make_viewport_clip_rect(D_8032CE78);
