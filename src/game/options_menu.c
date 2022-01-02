@@ -305,8 +305,6 @@ static struct Option optsMain[] = {
     DEF_OPT_SUBMENU( menuStr[3], &menuVideo ),
     DEF_OPT_SUBMENU( menuStr[4], &menuAudio ),
     DEF_OPT_BUTTON ( menuStr[5], optmenu_act_exit ),
-    // NOTE: always keep cheats the last option here because of the half-assed way I toggle them
-    DEF_OPT_SUBMENU( menuStr[6], &menuCheats )
 };
 
 static struct SubMenu menuMain = DEF_SUBMENU( menuStr[0], optsMain );
