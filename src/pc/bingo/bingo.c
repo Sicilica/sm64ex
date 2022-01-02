@@ -11,7 +11,7 @@ u8 displayFullsizeBingoBoard = 0;
 // this is duplicated from ingame menu
 #define MENU_MTX_PUSH   1
 #define MENU_MTX_NOPUSH 2
-void create_dl_translation_matrix(s8 pushOp, f32 x, f32 y, f32 z) {
+void create_dl_translation_matrix_AGAIN(s8 pushOp, f32 x, f32 y, f32 z) {
     Mtx *matrix = (Mtx *) alloc_display_list(sizeof(Mtx));
 
     if (matrix == NULL) {
