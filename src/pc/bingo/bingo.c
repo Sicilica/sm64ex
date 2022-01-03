@@ -3,50 +3,31 @@
 #include "sm64.h"
 #include "gfx_dimensions.h"
 #include "game/game_init.h"
+#include "game/ingame_menu.h"
 #include "game/level_update.h"
 #include "bingo.h"
 
 u8 displayFullsizeBingoBoard = 0;
 
-// this is duplicated from ingame menu
-#define MENU_MTX_PUSH   1
-#define MENU_MTX_NOPUSH 2
-void create_dl_translation_matrix_AGAIN(s8 pushOp, f32 x, f32 y, f32 z) {
-    Mtx *matrix = (Mtx *) alloc_display_list(sizeof(Mtx));
-
-    if (matrix == NULL) {
-        return;
-    }
-
-    guTranslate(matrix, x, y, z);
-
-    if (pushOp == MENU_MTX_PUSH)
-        gSPMatrix(gDisplayListHead++, VIRTUAL_TO_PHYSICAL(matrix), G_MTX_MODELVIEW | G_MTX_MUL | G_MTX_PUSH);
-
-    if (pushOp == MENU_MTX_NOPUSH)
-        gSPMatrix(gDisplayListHead++, VIRTUAL_TO_PHYSICAL(matrix), G_MTX_MODELVIEW | G_MTX_MUL | G_MTX_NOPUSH);
-}
-
 void draw_flat_rect(s16 x, s16 y, s16 w, s16 h, u8 r, u8 g, u8 b, u8 a) {
     gDPPipeSync(gDisplayListHead++);
     gDPSetPrimColor(gDisplayListHead++, 0, 0, r, g, b, a);
-    gSPTextureRectangle(gDisplayListHead++, x, y, x + w, y + h, 0, 0, 0, 0, 0);
+    gSPTextureRectangle(gDisplayListHead++, x << 2, y << 2, (x + w) << 2, (y + h) << 2, 0, 0, 0, 0, 0);
 }
 
-void render_min_bingo_board(void) {
+void render_bingo_board_helper(s16 left, s16 bottom, s16 cell_size, s16 padding) {
     gDPPipeSync(gDisplayListHead++);
     gDPSetRenderMode(gDisplayListHead++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
     gDPSetCycleType(gDisplayListHead++, G_CYC_1CYCLE);
     gDPSetCombineMode(gDisplayListHead++, G_CC_PRIMITIVE, G_CC_PRIMITIVE);
-    create_dl_translation_matrix_AGAIN(MENU_MTX_PUSH, GFX_DIMENSIONS_FROM_LEFT_EDGE(0), 240.0f, 0);
+    create_dl_ortho_matrix();
+    
+    // draw_flat_rect(0, 0, 20, 20, 255, 255, 255, 150);
+    // draw_flat_rect(0, 220, 20, 20, 0, 0, 0, 150);
 
-    s16 cell_size = 7;
-    s16 padding = 1;
-    s16 left = GFX_DIMENSIONS_RECT_FROM_LEFT_EDGE(20);
-    s16 bottom = 240-20;
     s16 top = bottom - 5 * cell_size - 6 * padding;
     s16 right = left + 5 * cell_size + 6 * padding;
-
+    
     // TODO be less lazy and draw each part individually
     draw_flat_rect(left, top, right - left, bottom - top, 40, 40, 40, 1);
 
@@ -68,20 +49,27 @@ void render_min_bingo_board(void) {
 
     gDPPipeSync(gDisplayListHead++);
     gDPSetCycleType(gDisplayListHead++, G_CYC_1CYCLE);
-    gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
+}
+
+void render_min_bingo_board(void) {
+    s16 cell_size = 7;
+    s16 padding = 1;
+    s16 left = GFX_DIMENSIONS_RECT_FROM_LEFT_EDGE(20);
+    s16 bottom = 240-20;
+
+    render_bingo_board_helper(left, bottom, cell_size, padding);
 }
 
 void render_fullsize_bingo_board(void) {
-    // TODO
     s16 cell_size = 40;
+    s16 padding = 0;
     s16 left = SCREEN_WIDTH / 2 - 5 * cell_size / 2;
     s16 bottom = 240 - 20;
-    s16 top = bottom - 5 * cell_size;
-    // TODO
+    render_bingo_board_helper(left, bottom, cell_size, padding);
 }
 
 void render_bingo_board(void) {
-    print_text(GFX_DIMENSIONS_RECT_FROM_LEFT_EDGE(20), 0, "BINGO 1");
+    print_text(GFX_DIMENSIONS_RECT_FROM_LEFT_EDGE(20), 0, "BINGO 6");
 
     if (displayFullsizeBingoBoard) {
         render_fullsize_bingo_board();
