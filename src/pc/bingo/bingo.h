@@ -1,6 +1,8 @@
 #ifndef BINGO_H
 #define BINGO_H
 
+#include "game/save_file.h"
+
 void handle_bingo_input(void);
 void render_bingo_board(void);
 
