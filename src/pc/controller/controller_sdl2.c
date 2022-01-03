@@ -115,6 +115,8 @@ static void controller_sdl_init(void) {
     SDL_GetRelativeMouseState(&mouse_x, &mouse_y);
 #endif
 
+    SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+
     controller_sdl_bind();
 
     init_ok = true;
