@@ -15,7 +15,7 @@ void draw_flat_rect(s16 x, s16 y, s16 w, s16 h, u8 r, u8 g, u8 b, u8 a) {
     gSPTextureRectangle(gDisplayListHead++, x << 2, y << 2, (x + w) << 2, (y + h) << 2, 0, 0, 0, 0, 0);
 }
 
-void render_bingo_board_helper(s16 left, s16 bottom, s16 cell_size, s16 padding) {
+void render_bingo_board_helper(s16 left, s16 bottom, s16 cell_size, s16 padding, u8 alpha) {
     gDPPipeSync(gDisplayListHead++);
     gDPSetRenderMode(gDisplayListHead++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
     gDPSetCycleType(gDisplayListHead++, G_CYC_1CYCLE);
@@ -27,9 +27,17 @@ void render_bingo_board_helper(s16 left, s16 bottom, s16 cell_size, s16 padding)
 
     s16 top = bottom - 5 * cell_size - 6 * padding;
     s16 right = left + 5 * cell_size + 6 * padding;
-    
-    // TODO be less lazy and draw each part individually
-    draw_flat_rect(left, top, right - left, bottom - top, 40, 40, 40, 1);
+
+    if (padding > 0) {
+        for (u8 i = 0; i < 6; i++) {
+            draw_flat_rect(left, top + (cell_size + padding) * i, right-left, padding, 40, 40, 40, alpha);
+        }
+        for (u8 i = 0; i < 5; i++) {
+            for (u8 j = 0; j < 6; j++) {
+                draw_flat_rect(left + (cell_size + padding) * j, top + padding + (cell_size + padding) * i, padding, cell_size, 40, 40, 40, alpha);
+            }
+        }
+    }
 
     for (u8 i = 0; i < 25; i++) {
         u8 x = i / 5;
@@ -44,7 +52,7 @@ void render_bingo_board_helper(s16 left, s16 bottom, s16 cell_size, s16 padding)
             g = 80;
             b = 255;
         }
-        draw_flat_rect(left + padding + (cell_size + padding) * x, top + padding + (cell_size + padding) * y, cell_size, cell_size, r, g, b, 200);
+        draw_flat_rect(left + padding + (cell_size + padding) * x, top + padding + (cell_size + padding) * y, cell_size, cell_size, r, g, b, alpha);
     }
 
     gDPPipeSync(gDisplayListHead++);
@@ -57,19 +65,20 @@ void render_min_bingo_board(void) {
     s16 left = GFX_DIMENSIONS_RECT_FROM_LEFT_EDGE(20);
     s16 bottom = 240-20;
 
-    render_bingo_board_helper(left, bottom, cell_size, padding);
+    render_bingo_board_helper(left, bottom, cell_size, padding, 100);
 }
 
 void render_fullsize_bingo_board(void) {
-    s16 cell_size = 40;
-    s16 padding = 0;
+    s16 cell_size = 34;
+    s16 padding = 5;
     s16 left = SCREEN_WIDTH / 2 - 5 * cell_size / 2;
     s16 bottom = 240 - 20;
-    render_bingo_board_helper(left, bottom, cell_size, padding);
+    render_bingo_board_helper(left, bottom, cell_size, padding, 200);
+    print_generic_string(left, 20, "4 stars in BOB");
 }
 
 void render_bingo_board(void) {
-    print_text(GFX_DIMENSIONS_RECT_FROM_LEFT_EDGE(20), 0, "BINGO 6");
+    print_text(GFX_DIMENSIONS_RECT_FROM_LEFT_EDGE(20), 0, "BINGO 8");
 
     if (displayFullsizeBingoBoard) {
         render_fullsize_bingo_board();
