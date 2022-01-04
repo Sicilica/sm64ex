@@ -718,6 +718,7 @@ static void level_cmd_get_or_set_var(void) {
         switch (CMD_GET(u8, 3)) {
             case 0:
                 gCurrSaveFileNum = sRegister;
+                // TODO bingo open castle here?
                 break;
             case 1:
                 gCurrCourseNum = sRegister;
