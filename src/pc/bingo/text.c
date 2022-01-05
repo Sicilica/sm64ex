@@ -1,14 +1,15 @@
 #include "text.h"
 
 u8* alloc_and_convert_chars_to_dialog(const char* raw) {
-    u8* out = malloc(sizeof(u8) * strlen(raw) + 1);
-    convert_chars_to_dialog(raw, &out, strlen(raw) + 1);
+    int estimatedLen = strlen(raw) + 1;
+    u8* out = malloc(sizeof(u8) * estimatedLen);
+    convert_chars_to_dialog(raw, out, estimatedLen);
     return out;
 }
 
-void convert_chars_to_dialog(const char* raw, u8** out, int outlen) {
+void convert_chars_to_dialog(const char* raw, u8* out, int outlen) {
     int i;
-    for (i = 0; i < outlen - 1 && *raw != '\0'; raw++) {
+    for (i = 0; (i < outlen - 1) && *raw != '\0'; raw++) {
         if (*raw >= 'A' && *raw <= 'Z') {
             out[i++] = (*raw - 'A') + 0x0A;
         } else if (*raw >= 'a' && *raw <= 'z') {
@@ -18,6 +19,7 @@ void convert_chars_to_dialog(const char* raw, u8** out, int outlen) {
         } else {
             switch (*raw) {
             case '\'': out[i++] = 0x3E; break;
+            case ' ': out[i++] = 0x9E; break;
             case '-': out[i++] = 0x9F; break;
             case '/': out[i++] = 0xD0; break;
             case '(': out[i++] = 0xE1; break;

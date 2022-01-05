@@ -166,9 +166,9 @@ void render_bingo_board(void) {
     init_bingo();
 
     print_text(GFX_DIMENSIONS_RECT_FROM_LEFT_EDGE(20), 0, BINGO_VERSION);
-    // sprintf(bingoDebugBuffer, "%d %d", gCurrSaveFileNum, gCurrCourseNum);
-    // bingo_debug_text(bingoDebugBuffer);
-    sprintf(bingoDebugBuffer, "%x", bingoSeed);
+    // snprintf(bingoDebugBuffer, 256, "%d %d", gCurrSaveFileNum, gCurrCourseNum);
+    // bingo_debug_text(bingoDebugBuffer, 256);
+    snprintf(bingoDebugBuffer, 256, "%x", bingoSeed);
     print_text(GFX_DIMENSIONS_RECT_FROM_RIGHT_EDGE(120), 0, bingoDebugBuffer);
 
     if (displayFullsizeBingoBoard) {

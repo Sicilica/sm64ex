@@ -3,7 +3,7 @@
 
 #include "game/save_file.h"
 
-#define BINGO_VERSION "ALPHA 25"
+#define BINGO_VERSION "ALPHA 26"
 #define BINGO_MAX_PLAYERS 8
 
 extern bool displayFullsizeBingoBoard;
@@ -17,7 +17,7 @@ void init_bingo(void);
 void handle_bingo_input(void);
 void render_bingo_board(void);
 
-void bingo_debug_text(char* buffer);
+void bingo_debug_text(char* buffer, int maxlen);
 
 struct BingoStarRef {
   enum CourseNum course;

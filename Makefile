@@ -71,6 +71,9 @@ CONTROLLER_API ?= SDL2
 BASEDIR ?= res
 BASEPACK ?= base.zip
 
+# Config paths for builder since patches can't include the lib files
+DISCORD_LIB_DIR := ../sm64ex-coop/lib/discordsdk
+
 # Automatic settings for PC port(s)
 
 WINDOWS_BUILD ?= 0
@@ -450,15 +453,15 @@ RPC_LIBS :=
 DISCORD_SDK_LIBS :=
 ifeq ($(WINDOWS_BUILD),1)
   ifeq ($(TARGET_BITS), 32)
-    DISCORD_SDK_LIBS := lib/discordsdk/x86/discord_game_sdk.dll
+    DISCORD_SDK_LIBS := $(DISCORD_LIB_DIR)/x86/discord_game_sdk.dll
   else
-    DISCORD_SDK_LIBS := lib/discordsdk/discord_game_sdk.dll
+    DISCORD_SDK_LIBS := $(DISCORD_LIB_DIR)/discord_game_sdk.dll
   endif
 else ifeq ($(OSX_BUILD),1)
   # needs testing
-  DISCORD_SDK_LIBS := lib/discordsdk/libdiscord_game_sdk.dylib
+  DISCORD_SDK_LIBS := $(DISCORD_LIB_DIR)/libdiscord_game_sdk.dylib
 else
-  DISCORD_SDK_LIBS := lib/discordsdk/libdiscord_game_sdk.so
+  DISCORD_SDK_LIBS := $(DISCORD_LIB_DIR)/libdiscord_game_sdk.so
 endif
 
 # Automatic dependency files
