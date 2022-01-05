@@ -49,8 +49,6 @@ EXT_OPTIONS_MENU ?= 1
 TEXTSAVES ?= 0
 # Load resources from external files
 EXTERNAL_DATA ?= 0
-# Enable Discord Rich Presence
-DISCORDRPC ?= 0
 
 # Various workarounds for weird toolchains
 
@@ -137,6 +135,20 @@ endif
 
 ifneq ($(TARGET_BITS),0)
   BITS := -m$(TARGET_BITS)
+endif
+
+# Determine default windows target bits
+ifeq ($(WINDOWS_BUILD), 1)
+  ifeq ($(TARGET_BITS), 0)
+    CPU_TYPE := $(firstword $(subst -, ,$(shell $(CC) -dumpmachine)))
+    ifeq ($(CPU_TYPE), x86_64)
+      TARGET_BITS := 64
+    else ifeq ($(CPU_TYPE), i686)
+      TARGET_BITS := 32
+    else ifeq ($(CPU_TYPE), mingw32)
+      TARGET_BITS := 32
+    endif
+  endif
 endif
 
 # Release (version) flag defs
@@ -314,13 +326,9 @@ LEVEL_DIRS := $(patsubst levels/%,%,$(dir $(wildcard levels/*/header.h)))
 # Directories containing source files
 
 # Hi, I'm a PC
-SRC_DIRS := src src/engine src/game src/audio src/menu src/buffers actors levels bin data assets src/pc src/pc/gfx src/pc/audio src/pc/controller src/pc/fs src/pc/fs/packtypes \
-  src/pc/bingo
+SRC_DIRS := src src/engine src/game src/audio src/menu src/buffers actors levels bin data assets src/pc src/pc/gfx src/pc/audio src/pc/controller src/pc/fs src/pc/fs/packtypes
+SRC_DIRS += src/pc/bingo
 ASM_DIRS :=
-
-ifeq ($(DISCORDRPC),1)
-  SRC_DIRS += src/pc/discord
-endif
 
 BIN_DIRS := bin bin/$(VERSION)
 
@@ -439,15 +447,18 @@ ULTRA_O_FILES := $(foreach file,$(ULTRA_S_FILES),$(BUILD_DIR)/$(file:.s=.o)) \
 GODDARD_O_FILES := $(foreach file,$(GODDARD_C_FILES),$(BUILD_DIR)/$(file:.c=.o))
 
 RPC_LIBS :=
-ifeq ($(DISCORDRPC),1)
-  ifeq ($(WINDOWS_BUILD),1)
-    RPC_LIBS := lib/discord/libdiscord-rpc.dll
-  else ifeq ($(OSX_BUILD),1) 
-    # needs testing
-    RPC_LIBS := lib/discord/libdiscord-rpc.dylib
+DISCORD_SDK_LIBS :=
+ifeq ($(WINDOWS_BUILD),1)
+  ifeq ($(TARGET_BITS), 32)
+    DISCORD_SDK_LIBS := lib/discordsdk/x86/discord_game_sdk.dll
   else
-    RPC_LIBS := lib/discord/libdiscord-rpc.so
+    DISCORD_SDK_LIBS := lib/discordsdk/discord_game_sdk.dll
   endif
+else ifeq ($(OSX_BUILD),1)
+  # needs testing
+  DISCORD_SDK_LIBS := lib/discordsdk/libdiscord_game_sdk.dylib
+else
+  DISCORD_SDK_LIBS := lib/discordsdk/libdiscord_game_sdk.so
 endif
 
 # Automatic dependency files
@@ -476,19 +487,7 @@ else
   CXX := emcc
 endif
 
-LD := $(CC)
-
-ifeq ($(DISCORDRPC),1)
-  LD := $(CXX)
-else ifeq ($(WINDOWS_BUILD),1)
-  ifeq ($(CROSS),i686-w64-mingw32.static-) # fixes compilation in MXE on Linux and WSL
-    LD := $(CC)
-  else ifeq ($(CROSS),x86_64-w64-mingw32.static-)
-    LD := $(CC)
-  else
-    LD := $(CXX)
-  endif
-endif
+LD := $(CXX)
 
 ifeq ($(WINDOWS_BUILD),1) # fixes compilation in MXE on Linux and WSL
   CPP := cpp -P
@@ -607,11 +606,8 @@ ifeq ($(NODRAWINGDISTANCE),1)
   CFLAGS += -DNODRAWINGDISTANCE
 endif
 
-# Check for Discord Rich Presence option
-ifeq ($(DISCORDRPC),1)
-  CC_CHECK += -DDISCORDRPC
-  CFLAGS += -DDISCORDRPC
-endif
+CC_CHECK += -DDISCORD_SDK
+CFLAGS += -DDISCORD_SDK
 
 # Check for texture fix option
 ifeq ($(TEXTURE_FIX),1)
@@ -681,11 +677,14 @@ else
     LDFLAGS += -no-pie
   endif
 
-  ifeq ($(DISCORDRPC),1)
-    LDFLAGS += -Wl,-rpath .
-  endif
-
 endif # End of LDFLAGS
+
+# network libraries
+ifeq ($(WINDOWS_BUILD),1)
+  LDFLAGS += -Wl,-Bdynamic -ldiscord_game_sdk -Wl,-Bstatic
+else
+  LDFLAGS += -ldiscord_game_sdk -Wl,-rpath . -Wl,-rpath lib/discordsdk
+endif
 
 # Prevent a crash with -sopt
 export LANG := C
@@ -774,6 +773,9 @@ load: $(ROM)
 $(BUILD_DIR)/$(RPC_LIBS):
 	@$(CP) -f $(RPC_LIBS) $(BUILD_DIR)
 
+$(BUILD_DIR)/$(DISCORD_SDK_LIBS):
+	@$(CP) -f $(DISCORD_SDK_LIBS) $(BUILD_DIR)
+
 libultra: $(BUILD_DIR)/libultra.a
 
 $(BUILD_DIR)/asm/boot.o: $(IPL3_RAW_FILES)
@@ -839,17 +841,11 @@ $(BUILD_DIR)/src/menu/star_select.o: $(BUILD_DIR)/include/text_strings.h $(BUILD
 $(BUILD_DIR)/src/game/ingame_menu.o: $(BUILD_DIR)/include/text_strings.h $(BUILD_DIR)/bin/eu/translation_en.o $(BUILD_DIR)/bin/eu/translation_de.o $(BUILD_DIR)/bin/eu/translation_fr.o
 $(BUILD_DIR)/src/game/options_menu.o: $(BUILD_DIR)/include/text_strings.h $(BUILD_DIR)/bin/eu/translation_en.o $(BUILD_DIR)/bin/eu/translation_de.o $(BUILD_DIR)/bin/eu/translation_fr.o
 O_FILES += $(BUILD_DIR)/bin/eu/translation_en.o $(BUILD_DIR)/bin/eu/translation_de.o $(BUILD_DIR)/bin/eu/translation_fr.o
-ifeq ($(DISCORDRPC),1)
-  $(BUILD_DIR)/src/pc/discord/discordrpc.o: $(BUILD_DIR)/include/text_strings.h $(BUILD_DIR)/bin/eu/translation_en.o $(BUILD_DIR)/bin/eu/translation_de.o $(BUILD_DIR)/bin/eu/translation_fr.o
-endif
 else
 $(BUILD_DIR)/src/menu/file_select.o: $(BUILD_DIR)/include/text_strings.h
 $(BUILD_DIR)/src/menu/star_select.o: $(BUILD_DIR)/include/text_strings.h
 $(BUILD_DIR)/src/game/ingame_menu.o: $(BUILD_DIR)/include/text_strings.h
 $(BUILD_DIR)/src/game/options_menu.o: $(BUILD_DIR)/include/text_strings.h
-ifeq ($(DISCORDRPC),1)
-  $(BUILD_DIR)/src/pc/discord/discordrpc.o: $(BUILD_DIR)/include/text_strings.h
-endif
 endif
 
 ################################################################
@@ -1028,7 +1024,7 @@ $(BUILD_DIR)/%.o: %.s
 
 
 
-$(EXE): $(O_FILES) $(MIO0_FILES:.mio0=.o) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(BUILD_DIR)/$(RPC_LIBS)
+$(EXE): $(O_FILES) $(MIO0_FILES:.mio0=.o) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(BUILD_DIR)/$(RPC_LIBS) $(BUILD_DIR)/$(DISCORD_SDK_LIBS)
 	$(LD) -L $(BUILD_DIR) -o $@ $(O_FILES) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(LDFLAGS)
 
 .PHONY: all clean distclean default diff test load libultra res

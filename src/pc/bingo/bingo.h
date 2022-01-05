@@ -13,6 +13,7 @@ extern char bingoDebugBuffer[];
 
 extern unsigned int bingoSeed;
 
+void init_bingo(void);
 void handle_bingo_input(void);
 void render_bingo_board(void);
 

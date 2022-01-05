@@ -32,7 +32,7 @@ void init_bingo(void) {
     bingoSeed = time(NULL);
     generate_bingo_board(bingoSeed);
 
-    gBingoPlayers[0].mappedName = convert_raw_str_to_charmap("Player1");
+    gBingoPlayers[0].mappedName = alloc_and_convert_chars_to_dialog("Player1");
     gBingoPlayers[0].colorR = 255;
     gBingoPlayers[0].colorG = 80;
     gBingoPlayers[0].colorB = 40;

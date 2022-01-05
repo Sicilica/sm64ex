@@ -46,6 +46,6 @@ void generate_bingo_board(unsigned int seed) {
   for (int i = min(25, numPossibleGoals) - 1; i >= 0; i--) {
     // TODO this by-ref isn't great
     gBingoBoard[i].goal = &possibleGoals[i];
-    gBingoBoard[i].mappedLabel = convert_raw_str_to_charmap(gBingoBoard[i].goal->label);
+    gBingoBoard[i].mappedLabel = alloc_and_convert_chars_to_dialog(gBingoBoard[i].goal->label);
   }
 }

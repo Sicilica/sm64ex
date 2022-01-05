@@ -3,6 +3,7 @@
 
 #include "bingo.h"
 
-u8* convert_raw_str_to_charmap(const char* raw);
+u8* alloc_and_convert_chars_to_dialog(const char* raw);
+void convert_chars_to_dialog(const char* raw, u8** out, int outlen)
 
 #endif

@@ -1,4 +1,5 @@
 #include <ultra64.h>
+#include <string.h>
 
 #include "actors/common1.h"
 #include "area.h"
@@ -374,6 +375,57 @@ void render_multi_text_string(s16 *xPos, s16 *yPos, s8 multiTextID)
     }
 }
 #endif
+
+// void str_ascii_to_dialog(const char* string, u8* dialog, u16 length) {
+//     for (int i = 0; i < length; i++) {
+//         switch (string[i]) {
+//             case '\'': dialog[i] = 0x3E; break;
+//             case '.': dialog[i] = 0x3F; break;
+//             case ',': dialog[i] = DIALOG_CHAR_COMMA; break;
+//             case '-': dialog[i] = 0x9F; break;
+//             case '(': dialog[i] = 0xE1; break;
+//             case ')': dialog[i] = 0xE3; break;
+//             case '&': dialog[i] = 0xE5; break;
+//             case '!': dialog[i] = 0xF2; break;
+//             case '%': dialog[i] = 0xF3; break;
+//             case '?': dialog[i] = 0xF4; break;
+//             case '"': dialog[i] = 0xF6; break; // 0xF5 is opening quote
+//             case '~': dialog[i] = 0xF7; break;
+//             case '*': dialog[i] = 0xFB; break;
+//             case ' ': dialog[i] = DIALOG_CHAR_SPACE; break;
+//             case '\n': dialog[i] = DIALOG_CHAR_NEWLINE; break;
+//             default: dialog[i] = ((u8)string[i] < 0xF0) ? ASCII_TO_DIALOG(string[i]) : string[i];
+//         }
+//     }
+//     dialog[length] = DIALOG_CHAR_TERMINATOR;
+// }
+
+f32 get_generic_dialog_width(u8* dialog) {
+    f32 largestWidth = 0;
+    f32 width = 0;
+    u8* d = dialog;
+    while (*d != DIALOG_CHAR_TERMINATOR) {
+        if (*d == DIALOG_CHAR_NEWLINE) {
+            width = 0;
+            d++;
+            continue;
+        }
+        width += (f32)(gDialogCharWidths[*d]);
+        largestWidth = MAX(width, largestWidth);
+        d++;
+    }
+    return largestWidth;
+}
+
+f32 get_generic_dialog_height(u8* dialog) {
+    int lines = 0;
+    u8* d = dialog;
+    while (*d != DIALOG_CHAR_TERMINATOR) {
+        if (*d == DIALOG_CHAR_NEWLINE) { lines++; }
+        d++;
+    }
+    return lines * 14;
+}
 
 #if defined(VERSION_JP) || defined(VERSION_SH)
 #define MAX_STRING_WIDTH 18
@@ -3071,6 +3123,8 @@ s16 render_menus_and_dialogs() {
     s16 mode = 0;
 
     create_dl_ortho_matrix();
+
+    // TODO this is where chat was rendered, we could render bingo here
 
     if (gMenuMode != -1) {
         switch (gMenuMode) {

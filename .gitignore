@@ -78,6 +78,8 @@ sm64config.txt
 !/sound/**/*custom*/**/*.aiff
 !/assets/**/*custom*.bin
 !/assets/**/*custom*/**/*.bin
+!/lib/discordsdk/*.*
+!/lib/discordsdk/x86/*.*
 
 # macOS bullcrap directory settings file thats autocreated
 .DS_Store

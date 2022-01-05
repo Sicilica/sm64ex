@@ -35,9 +35,8 @@
 #include "game/main.h"
 #include "game/thread6.h"
 
-#ifdef DISCORDRPC
-#include "pc/discord/discordrpc.h"
-#endif
+#include "bingo/network.h"
+
 
 OSMesg D_80339BEC;
 OSMesgQueue gSIEventMesgQueue;
@@ -84,6 +83,7 @@ void send_display_list(struct SPTask *spTask) {
 #endif
 
 void produce_one_frame(void) {
+    bingo_network_update();
     gfx_start_frame();
 
     const f32 master_mod = (f32)configMasterVolume / 127.0f;
@@ -120,13 +120,11 @@ void audio_shutdown(void) {
 }
 
 void game_deinit(void) {
-#ifdef DISCORDRPC
-    discord_shutdown();
-#endif
     configfile_save(configfile_name());
     controller_shutdown();
     audio_shutdown();
     gfx_shutdown();
+    bingo_network_shutdown();
     inited = false;
 }
 
@@ -235,6 +233,8 @@ void main_func(void) {
 
     audio_init();
     sound_init();
+
+    bingo_network_init();
 
     thread5_game_loop(NULL);
 
