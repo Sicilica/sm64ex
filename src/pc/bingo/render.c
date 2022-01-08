@@ -13,6 +13,8 @@
 #include "game/level_update.h"
 #include "game/segment2.h"
 #include "bingo.h"
+#include "locations.h"
+#include "players.h"
 #include "save.h"
 
 // "Total Coins:"
@@ -29,35 +31,6 @@ const u8 CANNONS_TEXT[] = {
   0x0C, 0x24, 0x31, 0x31, 0x32, 0x31, 0x36,
   0xE6,
   0xFF,
-};
-
-const u8 COURSE_NAMES[][8] = {
-  { 0x15, 0x32, 0x25, 0x25, 0x3C, 0xFF }, // Lobby
-  { 0x0B, 0x18, 0x0B, 0xFF }, // BOB
-  { 0x20, 0x0F, 0xFF }, // WF
-  { 0x13, 0x1B, 0x0B, 0xFF }, // JRB
-  { 0x0C, 0x0C, 0x16, 0xFF }, // CCM
-  { 0x0B, 0x0B, 0x11, 0xFF }, // BBH
-  { 0x11, 0x16, 0x0C, 0xFF }, // HMC
-  { 0x15, 0x15, 0x15, 0xFF }, // LLL
-  { 0x1C, 0x1C, 0x15, 0xFF }, // SSL
-  { 0x0D, 0x0D, 0x0D, 0xFF }, // DDD
-  { 0x1C, 0x15, 0xFF }, // SL
-  { 0x20, 0x0D, 0x20, 0xFF }, // WDW
-  { 0x1D, 0x1D, 0x16, 0xFF }, // TTM
-  { 0x1D, 0x11, 0x12, 0xFF }, // THI
-  { 0x1D, 0x1D, 0x0C, 0xFF }, // TTC
-  { 0x1B, 0x1B, 0xFF }, // RR
-  { 0x0B, 0x12, 0x1D, 0x0D, 0x20, 0xFF }, // BITDW
-  { 0x0B, 0x12, 0x1D, 0x0F, 0x1C, 0xFF }, // BITFS
-  { 0x0B, 0x12, 0x1D, 0x1C, 0xFF }, // BITS
-  { 0x19, 0x1C, 0x1C, 0xFF }, // PSS
-  { 0x0C, 0x18, 0x1D, 0x16, 0x0C, 0xFF }, // COTMC
-  { 0x1D, 0x1c, 0x1D, 0x20, 0x0C, 0xFF }, // TOTWC
-  { 0x1F, 0x0C, 0x1E, 0x1D, 0x16, 0xFF }, // VCUTM
-  { 0x20, 0x16, 0x18, 0x1D, 0x1B, 0xFF }, // WMOTR
-  { 0x1C, 0x0A, 0xFF }, // SA
-  { 0x0E, 0x31, 0x27, 0xFF }, // End
 };
 
 void draw_flat_rect(s16 x, s16 y, s16 w, s16 h, u8 r, u8 g, u8 b, u8 a) {
@@ -90,20 +63,22 @@ void render_bingo_board_helper(s16 left, s16 bottom, s16 cell_size, s16 padding,
     for (u8 i = 0; i < 25; i++) {
         u8 x = i % 5;
         u8 y = i / 5;
-        u8 r, g, b;
+        u8 r = 40;
+        u8 g = 40;
+        u8 b = 40;
         if (gBingoBoard[i].goal == NULL || gBingoBoard[i].goal->fn == NULL) {
             r = 0;
             g = 0;
             b = 0;
-        } else if (gBingoBoard[i].goal->fn(gBingoBoard[i].goal->args)) {
-            // TODO use playerFlags instead and don't eval this here
-            r = gBingoPlayers[0].colorR;
-            g = gBingoPlayers[0].colorG;
-            b = gBingoPlayers[0].colorB;
         } else {
-            r = 40;
-            g = 40;
-            b = 40;
+            u32 completionMask = 1 << i;
+            for (int i = 0; i < BINGO_MAX_PLAYERS; i++) {
+                if (gBingoPlayers[i].connected && (gBingoPlayers[i].completion & completionMask)) {
+                    r = (gBingoPlayers[i].color >> 16) & 0xFF;
+                    g = (gBingoPlayers[i].color >> 8) & 0xFF;
+                    b = gBingoPlayers[i].color & 0xFF;
+                }
+            }
         }
         draw_flat_rect(left + padding + (cell_size + padding) * x, top + padding + (cell_size + padding) * y, cell_size, cell_size, r, g, b, alpha);
     }
@@ -153,10 +128,10 @@ void render_fullsize_bingo_board(void) {
     print_generic_string(right + 10 + 60, top + 30 + 16, buffer);
 
     for (int i = 0; i < BINGO_MAX_PLAYERS; i++) {
-        if (gBingoPlayers[i].mappedName != NULL) {
-            gDPSetEnvColor(gDisplayListHead++, gBingoPlayers[i].colorR, gBingoPlayers[i].colorG, gBingoPlayers[i].colorB, 255);
-            print_generic_string(left - 100, top + 30 + 16 * i, gBingoPlayers[i].mappedName);
-            print_generic_string(left - 40, top + 30 + 16 * i, COURSE_NAMES[gCurrCourseNum]);
+        if (gBingoPlayers[i].connected) {
+            gDPSetEnvColor(gDisplayListHead++, (gBingoPlayers[i].color >> 16) & 0xFF, (gBingoPlayers[i].color >> 8) & 0xFF, gBingoPlayers[i].color & 0xFF, 255);
+            print_generic_string(left - 100, top + 30 + 16 * i, gBingoPlayers[i].dialogName);
+            print_generic_string(left - 40, top + 30 + 16 * i, bingoPlayerLocationDetails[gBingoPlayers[i].location].dialogName);
         }
     }
 }
@@ -167,8 +142,7 @@ void render_bingo_board(void) {
 
     print_text(GFX_DIMENSIONS_RECT_FROM_LEFT_EDGE(20), 0, BINGO_VERSION);
     // snprintf(bingoDebugBuffer, 256, "%d %d", gCurrSaveFileNum, gCurrCourseNum);
-    // bingo_debug_text(bingoDebugBuffer, 256);
-    snprintf(bingoDebugBuffer, 256, "%x", bingoSeed);
+    snprintf(bingoDebugBuffer, 256, "%x", gBingoBoardSeed);
     print_text(GFX_DIMENSIONS_RECT_FROM_RIGHT_EDGE(120), 0, bingoDebugBuffer);
 
     if (displayFullsizeBingoBoard) {

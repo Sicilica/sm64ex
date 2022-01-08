@@ -482,16 +482,6 @@ struct BingoGoal goals[] = {
   { .label = NULL }
 };
 
-void bingo_debug_text(char* buffer, int maxlen) {
-  // snprintf(buffer, maxlen, "%d %d",
-  //   // bool_to_str(goals[0].fn(goals[0].args)),
-  //   // bool_to_str(goals[1].fn(goals[1].args))
-  //   bingo_get_star_count_from_set(slideStars),
-  //   bingo_get_star_count_from_set(boxStars)
-  // );
-  snprintf(buffer, maxlen, "hello %s", "world");
-}
-
 struct BingoGoal* get_possible_bingo_goals(void) {
   return goals;
 }
