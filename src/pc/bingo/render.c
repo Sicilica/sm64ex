@@ -17,6 +17,8 @@
 #include "players.h"
 #include "save.h"
 
+int gBingoBoardFlashTimer;
+
 // "Total Coins:"
 const u8 TOTAL_COINS_TEXT[] = {
   0x1D, 0x32, 0x37, 0x24, 0x2F,
@@ -63,25 +65,35 @@ void render_bingo_board_helper(s16 left, s16 bottom, s16 cell_size, s16 padding,
     for (u8 i = 0; i < 25; i++) {
         u8 x = i % 5;
         u8 y = i / 5;
-        u8 r = 40;
-        u8 g = 40;
-        u8 b = 40;
+        u8 r, g, b;
         if (gBingoBoard[i].goal == NULL || gBingoBoard[i].goal->fn == NULL) {
             r = 0;
             g = 0;
             b = 0;
         } else {
+            int completedPlayersCount = 0;
+            int completedPlayers[BINGO_MAX_PLAYERS];
             u32 completionMask = 1 << i;
             for (int i = 0; i < BINGO_MAX_PLAYERS; i++) {
                 if (gBingoPlayers[i].connected && (gBingoPlayers[i].completion & completionMask)) {
-                    r = (gBingoPlayers[i].color >> 16) & 0xFF;
-                    g = (gBingoPlayers[i].color >> 8) & 0xFF;
-                    b = gBingoPlayers[i].color & 0xFF;
+                    completedPlayers[completedPlayersCount++] = i;
                 }
+            }
+            if (completedPlayersCount > 0) {
+                int displayPlayer = completedPlayers[(gBingoBoardFlashTimer / 30) % completedPlayersCount];
+                r = (gBingoPlayers[displayPlayer].color >> 16) & 0xFF;
+                g = (gBingoPlayers[displayPlayer].color >> 8) & 0xFF;
+                b = gBingoPlayers[displayPlayer].color & 0xFF;
+            } else {
+                r = 40;
+                g = 40;
+                b = 40;
             }
         }
         draw_flat_rect(left + padding + (cell_size + padding) * x, top + padding + (cell_size + padding) * y, cell_size, cell_size, r, g, b, alpha);
     }
+
+    gBingoBoardFlashTimer++;
 
     // gDPPipeSync(gDisplayListHead++);
     // gDPSetCycleType(gDisplayListHead++, G_CYC_1CYCLE);

@@ -5,7 +5,7 @@
 
 #include "game/save_file.h"
 
-#define BINGO_VERSION "ALPHA 37"
+#define BINGO_VERSION "ALPHA 38"
 #define BINGO_MAX_PLAYERS 8
 
 extern bool displayFullsizeBingoBoard;
