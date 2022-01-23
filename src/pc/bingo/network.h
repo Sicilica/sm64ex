@@ -7,4 +7,6 @@ void bingo_network_init(void);
 void bingo_network_shutdown(void);
 void bingo_network_update(void);
 
+void bingo_network_request_new_board(unsigned int seed);
+
 #endif

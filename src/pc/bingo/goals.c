@@ -27,10 +27,10 @@ bool bingo_have_N_bonus_stars(struct BingoGoalArgs args) {
   return actual >= args.count;
 }
 
-// bool bingo_have_at_least_N_lives(struct BingoGoalArgs args) {
-//   s8 actual = gMarioState->numLives;
-//   return actual >= args.count;
-// }
+bool bingo_have_at_least_N_lives(struct BingoGoalArgs args) {
+  s8 actual = gMarioState->numLives;
+  return actual >= args.count;
+}
 
 bool bingo_have_no_lives(struct BingoGoalArgs args) {
   return gMarioState->numLives == 0;
@@ -103,6 +103,13 @@ const char* bool_to_str(bool b) {
   }
   return "F";
 }
+
+typedef bool (*UseGoalGroupFn)(struct BingoConfig);
+
+struct GoalGroup {
+  UseGoalGroupFn fn;
+  struct BingoGoal* goals;
+};
 
 struct BingoStarRef redCoinStars[] = {
   { .course = COURSE_BOB, .star = 4 },
@@ -219,269 +226,484 @@ struct BingoStarRef bossStars[] = {
   { .course = COURSE_NONE }
 };
 
-struct BingoStarRef highestStars[] = {
+#define DEF_GOAL_GROUP(NAME, USE_FN, GOAL_LIST) \
+  bool group_ ## NAME ## _use(struct BingoConfig config) USE_FN \
+  struct BingoGoal group_ ## NAME ## _goals[] = { GOAL_LIST DEF_GOAL( .label = NULL ) };
+
+#define DEF_GOAL(...) { __VA_ARGS__ },
+#define GOAL_GROUP_REF(NAME) { .fn = group_ ## NAME ## _use, .goals = group_ ## NAME ## _goals },
+
+DEF_GOAL_GROUP(BOSS_STARS, {
+  return config.bossStars;
+},
+  DEF_GOAL( .label = "Bosses\nany 3", .fn = bingo_have_N_stars_from_set, .args = { .starSet = bossStars, .count = 3 } )
+  DEF_GOAL( .label = "Bosses\nall 4", .fn = bingo_have_N_stars_from_set, .args = { .starSet = bossStars, .count = 4 } )
+)
+
+DEF_GOAL_GROUP(BOX_STARS, {
+  return config.boxStars;
+},
+  DEF_GOAL( .label = "Box @s\nany 3", .fn = bingo_have_N_stars_from_set, .args = { .starSet = boxStars, .count = 3 } )
+  DEF_GOAL( .label = "Box @s\nany 4", .fn = bingo_have_N_stars_from_set, .args = { .starSet = boxStars, .count = 4 } )
+  DEF_GOAL( .label = "Box @s\nany 5", .fn = bingo_have_N_stars_from_set, .args = { .starSet = boxStars, .count = 5 } )
+  DEF_GOAL( .label = "Box @s\nany 6", .fn = bingo_have_N_stars_from_set, .args = { .starSet = boxStars, .count = 6 } )
+)
+
+DEF_GOAL_GROUP(CANNONS, {
+  return true;
+},
+  DEF_GOAL( .label = "3\nCannons", .fn = bingo_open_N_cannons, .args = { .count = 3 } )
+  DEF_GOAL( .label = "4\nCannons", .fn = bingo_open_N_cannons, .args = { .count = 4 } )
+  DEF_GOAL( .label = "5\nCannons", .fn = bingo_open_N_cannons, .args = { .count = 5 } )
+  DEF_GOAL( .label = "6\nCannons", .fn = bingo_open_N_cannons, .args = { .count = 6 } )
+  DEF_GOAL( .label = "7\nCannons", .fn = bingo_open_N_cannons, .args = { .count = 7 } )
+  DEF_GOAL( .label = "8\nCannons", .fn = bingo_open_N_cannons, .args = { .count = 8 } )
+  DEF_GOAL( .label = "9\nCannons", .fn = bingo_open_N_cannons, .args = { .count = 9 } )
+  DEF_GOAL( .label = "10\nCannons", .fn = bingo_open_N_cannons, .args = { .count = 10 } )
+  DEF_GOAL( .label = "All 11\nCannons", .fn = bingo_open_N_cannons, .args = { .count = 11 } )
+)
+
+DEF_GOAL_GROUP(CAP_STAGE_STARS, {
+  return config.capStageStars;
+},
+  DEF_GOAL( .label = "Wing\nCap", .fn = bingo_have_specific_star, .args = { .course = COURSE_TOTWC, .star = 1 })
+  DEF_GOAL( .label = "Metal\nCap", .fn = bingo_have_specific_star, .args = { .course = COURSE_COTMC, .star = 1 } )
+  DEF_GOAL( .label = "Vanish\nCap", .fn = bingo_have_specific_star, .args = { .course = COURSE_VCUTM, .star = 1 } )
+)
+
+DEF_GOAL_GROUP(CASTLE_STARS, {
+  return true;
+},
+  DEF_GOAL( .label = "@*4\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 4 } )
+  DEF_GOAL( .label = "@*5\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 5 } )
+  DEF_GOAL( .label = "@*6\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 6 } )
+  DEF_GOAL( .label = "@*7\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 7 } )
+  DEF_GOAL( .label = "@*8\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 8 } )
+  DEF_GOAL( .label = "@*9\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 9 } )
+  DEF_GOAL( .label = "@*10\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 10 } )
+  DEF_GOAL( .label = "@*11\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 11 } )
+  DEF_GOAL( .label = "@*12\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 12 } )
+)
+
+DEF_GOAL_GROUP(FREESTANDING_STARS, {
+  return config.freestandingStars;
+},
+  DEF_GOAL( .label = "Open @s\nany 5", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 5 } )
+  DEF_GOAL( .label = "Open @s\nany 6", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 6 } )
+  DEF_GOAL( .label = "Open @s\nany 7", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 7 } )
+  DEF_GOAL( .label = "Open @s\nany 8", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 8 } )
+  DEF_GOAL( .label = "Open @s\nany 9", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 9 } )
+  DEF_GOAL( .label = "Open @s\nany 10", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 10 } )
+  DEF_GOAL( .label = "Open @s\nany 11", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 11 } )
+  DEF_GOAL( .label = "Open @s\nany 12", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 12 } )
+  DEF_GOAL( .label = "Open @s\nany 13", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 13 } )
+  DEF_GOAL( .label = "Open @s\nany 14", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 14 } )
+  DEF_GOAL( .label = "Open @s\nany 15", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 15 } )
+)
+
+DEF_GOAL_GROUP(MISC, {
+  return true;
+},
+  DEF_GOAL( .label = "Lose\nCap", .fn = bingo_lose_marios_cap )
+  DEF_GOAL( .label = "0\nLives", .fn = bingo_have_no_lives )
+  DEF_GOAL( .label = "Toad 2\n(@*25)", .fn = bingo_have_toad_star, .args = { .star = 2 } )
+  DEF_GOAL( .label = "Toad 3\n(@*35)", .fn = bingo_have_toad_star, .args = { .star = 3 } )
+  // DEF_GOAL( .label = "MIPS 2\n(@*50)", .fn = bingo_have_mips_star, .args = { .star = 2 } )
+)
+
+DEF_GOAL_GROUP(PICK_STAGE_COINS, {
+  return true;
+},
+  DEF_GOAL( .label = "$*50\nany 1", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 50, .count2 = 1 } )
+  DEF_GOAL( .label = "$*50\nany 2", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 50, .count2 = 2 } )
+  DEF_GOAL( .label = "$*50\nany 3", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 50, .count2 = 3 } )
+  DEF_GOAL( .label = "$*50\nany 4", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 50, .count2 = 4 } )
+  DEF_GOAL( .label = "$*50\nany 5", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 50, .count2 = 5 } )
+  DEF_GOAL( .label = "$*50\nany 6", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 50, .count2 = 6 } )
+
+  DEF_GOAL( .label = "$*100\nany 1", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 100, .count2 = 1 } )
+  DEF_GOAL( .label = "$*100\nany 2", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 100, .count2 = 2 } )
+  DEF_GOAL( .label = "$*100\nany 3", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 100, .count2 = 3 } )
+  DEF_GOAL( .label = "$*100\nany 4", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 100, .count2 = 4 } )
+)
+
+DEF_GOAL_GROUP(PICK_STAGE_STARS, {
+  return true;
+},
+  DEF_GOAL( .label = "@*1\nany 6", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 1, .count2 = 6 } )
+  DEF_GOAL( .label = "@*1\nany 7", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 1, .count2 = 7 } )
+  DEF_GOAL( .label = "@*1\nany 8", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 1, .count2 = 8 } )
+  DEF_GOAL( .label = "@*1\nany 9", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 1, .count2 = 9 } )
+  DEF_GOAL( .label = "@*1\nany 10", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 1, .count2 = 10 } )
+  DEF_GOAL( .label = "@*1\nany 11", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 1, .count2 = 11 } )
+  DEF_GOAL( .label = "@*1\nany 12", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 1, .count2 = 12 } )
+  DEF_GOAL( .label = "@*1\neach", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 1, .count2 = 15 } )
+
+  DEF_GOAL( .label = "@*2\nany 4", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 2, .count2 = 4 } )
+  DEF_GOAL( .label = "@*2\nany 5", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 2, .count2 = 5 } )
+  DEF_GOAL( .label = "@*2\nany 6", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 2, .count2 = 6 } )
+  DEF_GOAL( .label = "@*2\nany 7", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 2, .count2 = 7 } )
+  DEF_GOAL( .label = "@*2\nany 8", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 2, .count2 = 8 } )
+  DEF_GOAL( .label = "@*2\nany 9", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 2, .count2 = 9 } )
+  DEF_GOAL( .label = "@*2\nany 10", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 2, .count2 = 10 } )
+  DEF_GOAL( .label = "@*2\neach", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 2, .count2 = 15 } )
+
+  DEF_GOAL( .label = "@*3\nany 2", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 3, .count2 = 2 } )
+  DEF_GOAL( .label = "@*3\nany 3", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 3, .count2 = 3 } )
+  DEF_GOAL( .label = "@*3\nany 4", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 3, .count2 = 4 } )
+  DEF_GOAL( .label = "@*3\nany 5", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 3, .count2 = 5 } )
+  DEF_GOAL( .label = "@*3\nany 6", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 3, .count2 = 6 } )
+  DEF_GOAL( .label = "@*3\nany 7", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 3, .count2 = 7 } )
+  // DEF_GOAL( .label = "@*3\nany 8", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 3, .count2 = 8 } )
+  
+  DEF_GOAL( .label = "@*4\nany 1", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 4, .count2 = 1 } )
+  DEF_GOAL( .label = "@*4\nany 2", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 4, .count2 = 2 } )
+  DEF_GOAL( .label = "@*4\nany 3", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 4, .count2 = 3 } )
+  DEF_GOAL( .label = "@*4\nany 4", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 4, .count2 = 4 } )
+  DEF_GOAL( .label = "@*4\nany 5", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 4, .count2 = 5 } )
+  // DEF_GOAL( .label = "@*4\nany 6", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 4, .count2 = 6 } )
+
+  DEF_GOAL( .label = "@*5\nany 1", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 5, .count2 = 1 } )
+  DEF_GOAL( .label = "@*5\nany 2", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 5, .count2 = 2 } )
+  DEF_GOAL( .label = "@*5\nany 3", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 5, .count2 = 3 } )
+  DEF_GOAL( .label = "@*5\nany 4", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 5, .count2 = 4 } )
+  
+  DEF_GOAL( .label = "All @s\nany 1", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 7, .count2 = 1 } )
+  DEF_GOAL( .label = "All @s\nany 2", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 7, .count2 = 2 } )
+  DEF_GOAL( .label = "All @s\nany 3", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 7, .count2 = 3 } )
+)
+
+DEF_GOAL_GROUP(RACE_STARS, {
+  return config.raceStars;
+},
+  DEF_GOAL( .label = "Races\nany 2", .fn = bingo_have_N_stars_from_set, .args = { .starSet = raceStars, .count = 2 } )
+  DEF_GOAL( .label = "Races\nall 3", .fn = bingo_have_N_stars_from_set, .args = { .starSet = raceStars, .count = 3 } )
+)
+
+DEF_GOAL_GROUP(RED_COIN_STARS, {
+  return config.redCoinStars;
+},
+  DEF_GOAL( .label = "Reds\nany 5", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 5 } )
+  DEF_GOAL( .label = "Reds\nany 6", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 6 } )
+  DEF_GOAL( .label = "Reds\nany 7", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 7 } )
+  DEF_GOAL( .label = "Reds\nany 8", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 8 } )
+  DEF_GOAL( .label = "Reds\nany 9", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 9 } )
+  DEF_GOAL( .label = "Reds\nany 10", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 10 } )
+  DEF_GOAL( .label = "Reds\nany 11", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 11 } )
+  DEF_GOAL( .label = "Reds\nany 12", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 12 } )
+  DEF_GOAL( .label = "Reds\nany 13", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 13 } )
+  DEF_GOAL( .label = "Reds\nany 14", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 14 } )
+  DEF_GOAL( .label = "Reds\nany 15", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 15 } )
+)
+
+DEF_GOAL_GROUP(SECRETS_STARS, {
+  return config.secretsStars;
+},
+  DEF_GOAL( .label = "Secrets\nany 2", .fn = bingo_have_N_stars_from_set, .args = { .starSet = secretsStars, .count = 2 } )
+  DEF_GOAL( .label = "Secrets\nany 3", .fn = bingo_have_N_stars_from_set, .args = { .starSet = secretsStars, .count = 3 } )
+)
+
+DEF_GOAL_GROUP(SPECIFIC_STAGE_COINS, {
+  return true; 
+},
+  DEF_GOAL( .label = "$*50\nin BOB", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_BOB, .count = 50 } )
+  DEF_GOAL( .label = "$*50\nin WF", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_WF, .count = 50 } )
+  DEF_GOAL( .label = "$*50\nin JRB", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_JRB, .count = 50 } )
+  DEF_GOAL( .label = "$*50\nin CCM", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_CCM, .count = 50 } )
+  DEF_GOAL( .label = "$*50\nin BBH", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_BBH, .count = 50 } )
+  DEF_GOAL( .label = "$*50\nin HMC", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_HMC, .count = 50 } )
+  DEF_GOAL( .label = "$*50\nin LLL", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_LLL, .count = 50 } )
+  DEF_GOAL( .label = "$*50\nin SSL", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_SSL, .count = 50 } )
+  DEF_GOAL( .label = "$*50\nin DDD", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_DDD, .count = 50 } )
+  DEF_GOAL( .label = "$*50\nin SL", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_SL, .count = 50 } )
+  DEF_GOAL( .label = "$*50\nin WDW", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_WDW, .count = 50 } )
+  DEF_GOAL( .label = "$*50\nin TTM", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_TTM, .count = 50 } )
+  DEF_GOAL( .label = "$*50\nin THI", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_THI, .count = 50 } )
+  DEF_GOAL( .label = "$*50\nin TTC", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_TTC, .count = 50 } )
+  DEF_GOAL( .label = "$*50\nin RR", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_RR, .count = 50 } )
+
+  DEF_GOAL( .label = "$*100\nin BOB", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_BOB, .count = 100 } )
+  DEF_GOAL( .label = "$*100\nin WF", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_WF, .count = 100 } )
+  DEF_GOAL( .label = "$*100\nin JRB", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_JRB, .count = 100 } )
+  DEF_GOAL( .label = "$*100\nin CCM", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_CCM, .count = 100 } )
+  DEF_GOAL( .label = "$*100\nin BBH", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_BBH, .count = 100 } )
+  DEF_GOAL( .label = "$*100\nin HMC", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_HMC, .count = 100 } )
+  DEF_GOAL( .label = "$*100\nin LLL", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_LLL, .count = 100 } )
+  DEF_GOAL( .label = "$*100\nin SSL", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_SSL, .count = 100 } )
+  DEF_GOAL( .label = "$*100\nin DDD", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_DDD, .count = 100 } )
+  DEF_GOAL( .label = "$*100\nin SL", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_SL, .count = 100 } )
+  DEF_GOAL( .label = "$*100\nin WDW", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_WDW, .count = 100 } )
+  DEF_GOAL( .label = "$*100\nin TTM", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_TTM, .count = 100 } )
+  DEF_GOAL( .label = "$*100\nin THI", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_THI, .count = 100 } )
+  DEF_GOAL( .label = "$*100\nin TTC", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_TTC, .count = 100 } )
+  DEF_GOAL( .label = "$*100\nin RR", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_RR, .count = 100 } )
+)
+
+DEF_GOAL_GROUP(SPECIFIC_STAGE_STARS, {
+  return true;
+},
+  DEF_GOAL( .label = "@*3\nin BOB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BOB, .count = 3 } )
+  DEF_GOAL( .label = "@*3\nin WF", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WF, .count = 3 } )
+  DEF_GOAL( .label = "@*3\nin JRB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_JRB, .count = 3 } )
+  DEF_GOAL( .label = "@*3\nin CCM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_CCM, .count = 3 } )
+  DEF_GOAL( .label = "@*3\nin BBH", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BBH, .count = 3 } )
+  DEF_GOAL( .label = "@*3\nin HMC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_HMC, .count = 3 } )
+  DEF_GOAL( .label = "@*3\nin LLL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_LLL, .count = 3 } )
+  DEF_GOAL( .label = "@*3\nin SSL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SSL, .count = 3 } )
+  DEF_GOAL( .label = "@*3\nin DDD", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_DDD, .count = 3 } )
+  DEF_GOAL( .label = "@*3\nin SL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SL, .count = 3 } )
+  DEF_GOAL( .label = "@*3\nin WDW", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WDW, .count = 3 } )
+  DEF_GOAL( .label = "@*3\nin TTM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTM, .count = 3 } )
+  DEF_GOAL( .label = "@*3\nin THI", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_THI, .count = 3 } )
+  DEF_GOAL( .label = "@*3\nin TTC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTC, .count = 3 } )
+  DEF_GOAL( .label = "@*3\nin RR", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_RR, .count = 3 } )
+  
+  DEF_GOAL( .label = "@*4\nin BOB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BOB, .count = 4 } )
+  DEF_GOAL( .label = "@*4\nin WF", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WF, .count = 4 } )
+  DEF_GOAL( .label = "@*4\nin JRB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_JRB, .count = 4 } )
+  DEF_GOAL( .label = "@*4\nin CCM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_CCM, .count = 4 } )
+  DEF_GOAL( .label = "@*4\nin BBH", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BBH, .count = 4 } )
+  DEF_GOAL( .label = "@*4\nin HMC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_HMC, .count = 4 } )
+  DEF_GOAL( .label = "@*4\nin LLL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_LLL, .count = 4 } )
+  DEF_GOAL( .label = "@*4\nin SSL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SSL, .count = 4 } )
+  DEF_GOAL( .label = "@*4\nin DDD", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_DDD, .count = 4 } )
+  DEF_GOAL( .label = "@*4\nin SL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SL, .count = 4 } )
+  DEF_GOAL( .label = "@*4\nin WDW", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WDW, .count = 4 } )
+  DEF_GOAL( .label = "@*4\nin TTM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTM, .count = 4 } )
+  DEF_GOAL( .label = "@*4\nin THI", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_THI, .count = 4 } )
+  DEF_GOAL( .label = "@*4\nin TTC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTC, .count = 4 } )
+  DEF_GOAL( .label = "@*4\nin RR", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_RR, .count = 4 } )
+  
+  DEF_GOAL( .label = "@*5\nin BOB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BOB, .count = 5 } )
+  DEF_GOAL( .label = "@*5\nin WF", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WF, .count = 5 } )
+  DEF_GOAL( .label = "@*5\nin JRB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_JRB, .count = 5 } )
+  DEF_GOAL( .label = "@*5\nin CCM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_CCM, .count = 5 } )
+  DEF_GOAL( .label = "@*5\nin BBH", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BBH, .count = 5 } )
+  DEF_GOAL( .label = "@*5\nin HMC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_HMC, .count = 5 } )
+  DEF_GOAL( .label = "@*5\nin LLL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_LLL, .count = 5 } )
+  DEF_GOAL( .label = "@*5\nin SSL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SSL, .count = 5 } )
+  DEF_GOAL( .label = "@*5\nin DDD", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_DDD, .count = 5 } )
+  DEF_GOAL( .label = "@*5\nin SL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SL, .count = 5 } )
+  DEF_GOAL( .label = "@*5\nin WDW", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WDW, .count = 5 } )
+  DEF_GOAL( .label = "@*5\nin TTM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTM, .count = 5 } )
+  DEF_GOAL( .label = "@*5\nin THI", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_THI, .count = 5 } )
+  DEF_GOAL( .label = "@*5\nin TTC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTC, .count = 5 } )
+  DEF_GOAL( .label = "@*5\nin RR", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_RR, .count = 5 } )
+  
+  DEF_GOAL( .label = "@*6\nin BOB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BOB, .count = 6 } )
+  DEF_GOAL( .label = "@*6\nin WF", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WF, .count = 6 } )
+  DEF_GOAL( .label = "@*6\nin JRB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_JRB, .count = 6 } )
+  DEF_GOAL( .label = "@*6\nin CCM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_CCM, .count = 6 } )
+  DEF_GOAL( .label = "@*6\nin BBH", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BBH, .count = 6 } )
+  DEF_GOAL( .label = "@*6\nin HMC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_HMC, .count = 6 } )
+  DEF_GOAL( .label = "@*6\nin LLL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_LLL, .count = 6 } )
+  DEF_GOAL( .label = "@*6\nin SSL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SSL, .count = 6 } )
+  DEF_GOAL( .label = "@*6\nin DDD", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_DDD, .count = 6 } )
+  DEF_GOAL( .label = "@*6\nin SL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SL, .count = 6 } )
+  DEF_GOAL( .label = "@*6\nin WDW", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WDW, .count = 6 } )
+  DEF_GOAL( .label = "@*6\nin TTM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTM, .count = 6 } )
+  DEF_GOAL( .label = "@*6\nin THI", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_THI, .count = 6 } )
+  DEF_GOAL( .label = "@*6\nin TTC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTC, .count = 6 } )
+  DEF_GOAL( .label = "@*6\nin RR", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_RR, .count = 6 } )
+  
+  DEF_GOAL( .label = "All @s\nin BOB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BOB, .count = 7 } )
+  DEF_GOAL( .label = "All @s\nin WF", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WF, .count = 7 } )
+  DEF_GOAL( .label = "All @s\nin JRB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_JRB, .count = 7 } )
+  DEF_GOAL( .label = "All @s\nin CCM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_CCM, .count = 7 } )
+  DEF_GOAL( .label = "All @s\nin BBH", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BBH, .count = 7 } )
+  DEF_GOAL( .label = "All @s\nin HMC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_HMC, .count = 7 } )
+  DEF_GOAL( .label = "All @s\nin LLL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_LLL, .count = 7 } )
+  DEF_GOAL( .label = "All @s\nin SSL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SSL, .count = 7 } )
+  DEF_GOAL( .label = "All @s\nin DDD", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_DDD, .count = 7 } )
+  DEF_GOAL( .label = "All @s\nin SL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SL, .count = 7 } )
+  DEF_GOAL( .label = "All @s\nin WDW", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WDW, .count = 7 } )
+  DEF_GOAL( .label = "All @s\nin TTM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTM, .count = 7 } )
+  DEF_GOAL( .label = "All @s\nin THI", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_THI, .count = 7 } )
+  DEF_GOAL( .label = "All @s\nin TTC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTC, .count = 7 } )
+  DEF_GOAL( .label = "All @s\nin RR", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_RR, .count = 7 } )
+)
+
+DEF_GOAL_GROUP(SLIDE_STARS, {
+  return config.slideStars;
+},
+  DEF_GOAL( .label = "Slides\nany 3", .fn = bingo_have_N_stars_from_set, .args = { .starSet = slideStars, .count = 3 } )
+  DEF_GOAL( .label = "Slides\nall 4", .fn = bingo_have_N_stars_from_set, .args = { .starSet = slideStars, .count = 4 } )
+)
+
+DEF_GOAL_GROUP(TOTAL_COINS, {
+  return true;
+},
+  DEF_GOAL( .label = "$*200\nTotal", .fn = bingo_have_N_total_coins, .args = { .count = 200 } )
+  DEF_GOAL( .label = "$*250\nTotal", .fn = bingo_have_N_total_coins, .args = { .count = 250 } )
+  DEF_GOAL( .label = "$*300\nTotal", .fn = bingo_have_N_total_coins, .args = { .count = 300 } )
+  DEF_GOAL( .label = "$*350\nTotal", .fn = bingo_have_N_total_coins, .args = { .count = 350 } )
+  DEF_GOAL( .label = "$*400\nTotal", .fn = bingo_have_N_total_coins, .args = { .count = 400 } )
+  DEF_GOAL( .label = "$*450\nTotal", .fn = bingo_have_N_total_coins, .args = { .count = 450 } )
+  DEF_GOAL( .label = "$*500\nTotal", .fn = bingo_have_N_total_coins, .args = { .count = 500 } )
+  DEF_GOAL( .label = "$*550\nTotal", .fn = bingo_have_N_total_coins, .args = { .count = 550 } )
+  DEF_GOAL( .label = "$*600\nTotal", .fn = bingo_have_N_total_coins, .args = { .count = 600 } )
+)
+
+DEF_GOAL_GROUP(TOTAL_STARS, {
+  return true;
+},
+  DEF_GOAL( .label = "@*20\nTotal", .fn = bingo_have_N_total_stars, .args = { .count = 20 } )
+  DEF_GOAL( .label = "@*25\nTotal", .fn = bingo_have_N_total_stars, .args = { .count = 25 } )
+  DEF_GOAL( .label = "@*30\nTotal", .fn = bingo_have_N_total_stars, .args = { .count = 30 } )
+  DEF_GOAL( .label = "@*35\nTotal", .fn = bingo_have_N_total_stars, .args = { .count = 35 } )
+)
+
+struct GoalGroup goalGroups[] = {
+  GOAL_GROUP_REF(BOSS_STARS)
+  GOAL_GROUP_REF(BOX_STARS)
+  GOAL_GROUP_REF(CANNONS)
+  GOAL_GROUP_REF(CAP_STAGE_STARS)
+  GOAL_GROUP_REF(CASTLE_STARS)
+  GOAL_GROUP_REF(FREESTANDING_STARS)
+  GOAL_GROUP_REF(MISC)
+  GOAL_GROUP_REF(PICK_STAGE_COINS)
+  GOAL_GROUP_REF(PICK_STAGE_STARS)
+  GOAL_GROUP_REF(RACE_STARS)
+  GOAL_GROUP_REF(RED_COIN_STARS)
+  GOAL_GROUP_REF(SECRETS_STARS)
+  GOAL_GROUP_REF(SPECIFIC_STAGE_COINS)
+  GOAL_GROUP_REF(SPECIFIC_STAGE_STARS)
+  GOAL_GROUP_REF(SLIDE_STARS)
+  GOAL_GROUP_REF(TOTAL_COINS)
+  GOAL_GROUP_REF(TOTAL_STARS)
+  { .fn = NULL },
+};
+
+#define BINGO_FLAG_PLAYER_STATE (1 << 0)
+#define BINGO_FLAG_TOTAL_STARS (1 << 1)
+// #define BINGO_FLAG_PICK_STAGES (1 << 2)
+
+// Stars 17-24 are worth 1 difficulty each. Stars 25-34 are worth 2 each. Stars 35+ are worth 3 each.
+#define DIFFICULTY_FROM_TOTAL_STARS(x) (((x) > 16 ? (x) - 16 : 0) + ((x) > 25 ? (x) - 25 : 0) + ((x) > 35 ? (x) - 35 : 0))
+#define DIFFICULTY_FROM_POOL_STARS(n, pool_size) 1
+#define DIFFICULTY_FROM_UNIQUE_STAGES(x) 1
+#define DIFFICULTY_FROM_TOTAL_COINS(x) 1
+
+void calculate_difficulty_and_flags_for_goal(struct BingoGoal* goal) {
   // TODO
-  // { .course = COURSE_BOB, .star = 0 },
-  // { .course = COURSE_WF, .star = 0 },
-  // { .course = COURSE_JRB, .star = 0 },
-  // { .course = COURSE_CCM, .star = 0 },
-  // { .course = COURSE_BBH, .star = 0 },
-  // { .course = COURSE_HMC, .star = 0 },
-  // { .course = COURSE_LLL, .star = 0 },
-  // { .course = COURSE_SSL, .star = 0 },
-  // { .course = COURSE_DDD, .star = 0 },
-  // { .course = COURSE_SL, .star = 0 },
-  // { .course = COURSE_WDW, .star = 0 },
-  // { .course = COURSE_TTM, .star = 0 },
-  // { .course = COURSE_THI, .star = 0 },
-  // { .course = COURSE_TTC, .star = 0 },
-  // { .course = COURSE_RR, .star = 0 },
-  { .course = COURSE_NONE }
-};
+  goal->difficulty = 1;
 
-struct BingoGoal goals[] = {
-  // BingoSync
-  // { .label = "WF\nReds", .fn = bingo_have_specific_star, .args = { .course = COURSE_WF, .star = 4 } },
-  // { .label = "WF\n100$", .fn = bingo_have_specific_star, .args = { .course = COURSE_WF, .star = 7 } },
-  // { .label = "PSS\n@*2", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_PSS, .count = 2 } },
+  if (goal->fn == bingo_have_N_total_stars) {
+    goal->difficulty = DIFFICULTY_FROM_TOTAL_STARS(goal->args.count);
+    goal->flags = BINGO_FLAG_TOTAL_STARS;
 
-  // All the stars that aren't in any set...
-  // { .label = "JRB - Can The\nEel Come\nOut To Play?", .fn = bingo_have_specific_star, .args = { .course = COURSE_JRB, .star = 2 } },
-  // { .label = "CCM - Li'l\nPenguin\nLost", .fn = bingo_have_specific_star, .args = { .course = COURSE_CCM, .star = 2 } },
-  // { .label = "CCM -\nSnowman's Lost\nHis Head", .fn = bingo_have_specific_star, .args = { .course = COURSE_CCM, .star = 5 } },
+  } else if (goal->fn == bingo_open_N_cannons) {
+    // TODO
+    goal->difficulty = DIFFICULTY_FROM_POOL_STARS(goal->args.count, 11);
 
-  // Goal types I would want to generate:
-  // - goal for every specific star in the game (these will generally be easy but will encourage going to more levels)
-  //    (these can't really be generated)
-  // - goal for N secret stars
-  // - goal for N stars from X different courses
-  // - goal for N 100 coin stars (and other categories)
-  // - goal for 50 coins from N stages
+  } else if (goal->fn == bingo_have_N_bonus_stars) {
+    // TODO
+    goal->difficulty = DIFFICULTY_FROM_POOL_STARS(goal->args.count, 15);
 
-  { .label = "Lose\nCap", .fn = bingo_lose_marios_cap },
-  { .label = "0 Lives", .fn = bingo_have_no_lives },
-  { .label = "Toad 2\n(@*25)", .fn = bingo_have_toad_star, .args = { .star = 2 } },
-  { .label = "Toad 3\n(@*35)", .fn = bingo_have_toad_star, .args = { .star = 3 } },
-  // { .label = "MIPS 2\n(@*50)", .fn = bingo_have_mips_star, .args = { .star = 2 } },
+  } else if (goal->fn == bingo_have_at_least_N_lives) { // unused
+    // TODO
+    goal->difficulty = 1;
+    goal->flags = BINGO_FLAG_PLAYER_STATE;
 
-  { .label = "@*3\nin BOB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BOB, .count = 3 } },
-  { .label = "@*3\nin WF", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WF, .count = 3 } },
-  { .label = "@*3\nin JRB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_JRB, .count = 3 } },
-  { .label = "@*3\nin CCM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_CCM, .count = 3 } },
-  { .label = "@*3\nin BBH", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BBH, .count = 3 } },
-  { .label = "@*3\nin HMC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_HMC, .count = 3 } },
-  { .label = "@*3\nin LLL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_LLL, .count = 3 } },
-  { .label = "@*3\nin SSL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SSL, .count = 3 } },
-  { .label = "@*3\nin DDD", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_DDD, .count = 3 } },
-  { .label = "@*3\nin SL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SL, .count = 3 } },
-  { .label = "@*3\nin WDW", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WDW, .count = 3 } },
-  { .label = "@*3\nin TTM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTM, .count = 3 } },
-  { .label = "@*3\nin THI", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_THI, .count = 3 } },
-  { .label = "@*3\nin TTC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTC, .count = 3 } },
-  { .label = "@*3\nin RR", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_RR, .count = 3 } },
-  
-  { .label = "@*4\nin BOB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BOB, .count = 4 } },
-  { .label = "@*4\nin WF", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WF, .count = 4 } },
-  { .label = "@*4\nin JRB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_JRB, .count = 4 } },
-  { .label = "@*4\nin CCM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_CCM, .count = 4 } },
-  { .label = "@*4\nin BBH", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BBH, .count = 4 } },
-  { .label = "@*4\nin HMC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_HMC, .count = 4 } },
-  { .label = "@*4\nin LLL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_LLL, .count = 4 } },
-  { .label = "@*4\nin SSL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SSL, .count = 4 } },
-  { .label = "@*4\nin DDD", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_DDD, .count = 4 } },
-  { .label = "@*4\nin SL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SL, .count = 4 } },
-  { .label = "@*4\nin WDW", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WDW, .count = 4 } },
-  { .label = "@*4\nin TTM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTM, .count = 4 } },
-  { .label = "@*4\nin THI", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_THI, .count = 4 } },
-  { .label = "@*4\nin TTC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTC, .count = 4 } },
-  { .label = "@*4\nin RR", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_RR, .count = 4 } },
-  
-  { .label = "@*5\nin BOB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BOB, .count = 5 } },
-  { .label = "@*5\nin WF", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WF, .count = 5 } },
-  { .label = "@*5\nin JRB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_JRB, .count = 5 } },
-  { .label = "@*5\nin CCM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_CCM, .count = 5 } },
-  { .label = "@*5\nin BBH", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BBH, .count = 5 } },
-  { .label = "@*5\nin HMC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_HMC, .count = 5 } },
-  { .label = "@*5\nin LLL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_LLL, .count = 5 } },
-  { .label = "@*5\nin SSL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SSL, .count = 5 } },
-  { .label = "@*5\nin DDD", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_DDD, .count = 5 } },
-  { .label = "@*5\nin SL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SL, .count = 5 } },
-  { .label = "@*5\nin WDW", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WDW, .count = 5 } },
-  { .label = "@*5\nin TTM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTM, .count = 5 } },
-  { .label = "@*5\nin THI", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_THI, .count = 5 } },
-  { .label = "@*5\nin TTC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTC, .count = 5 } },
-  { .label = "@*5\nin RR", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_RR, .count = 5 } },
-  
-  { .label = "@*6\nin BOB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BOB, .count = 6 } },
-  { .label = "@*6\nin WF", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WF, .count = 6 } },
-  { .label = "@*6\nin JRB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_JRB, .count = 6 } },
-  { .label = "@*6\nin CCM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_CCM, .count = 6 } },
-  { .label = "@*6\nin BBH", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BBH, .count = 6 } },
-  { .label = "@*6\nin HMC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_HMC, .count = 6 } },
-  { .label = "@*6\nin LLL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_LLL, .count = 6 } },
-  { .label = "@*6\nin SSL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SSL, .count = 6 } },
-  { .label = "@*6\nin DDD", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_DDD, .count = 6 } },
-  { .label = "@*6\nin SL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SL, .count = 6 } },
-  { .label = "@*6\nin WDW", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WDW, .count = 6 } },
-  { .label = "@*6\nin TTM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTM, .count = 6 } },
-  { .label = "@*6\nin THI", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_THI, .count = 6 } },
-  { .label = "@*6\nin TTC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTC, .count = 6 } },
-  { .label = "@*6\nin RR", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_RR, .count = 6 } },
-  
-  { .label = "All @s\nin BOB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BOB, .count = 7 } },
-  { .label = "All @s\nin WF", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WF, .count = 7 } },
-  { .label = "All @s\nin JRB", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_JRB, .count = 7 } },
-  { .label = "All @s\nin CCM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_CCM, .count = 7 } },
-  { .label = "All @s\nin BBH", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_BBH, .count = 7 } },
-  { .label = "All @s\nin HMC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_HMC, .count = 7 } },
-  { .label = "All @s\nin LLL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_LLL, .count = 7 } },
-  { .label = "All @s\nin SSL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SSL, .count = 7 } },
-  { .label = "All @s\nin DDD", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_DDD, .count = 7 } },
-  { .label = "All @s\nin SL", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_SL, .count = 7 } },
-  { .label = "All @s\nin WDW", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_WDW, .count = 7 } },
-  { .label = "All @s\nin TTM", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTM, .count = 7 } },
-  { .label = "All @s\nin THI", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_THI, .count = 7 } },
-  { .label = "All @s\nin TTC", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_TTC, .count = 7 } },
-  { .label = "All @s\nin RR", .fn = bingo_have_N_stars_in_stage_X, .args = { .course = COURSE_RR, .count = 7 } },
+  } else if (goal->fn == bingo_have_no_lives) {
+    // TODO
+    goal->difficulty = 1;
+    goal->flags = BINGO_FLAG_PLAYER_STATE;
 
-  { .label = "3\nCannons", .fn = bingo_open_N_cannons, .args = { .count = 3 } },
-  { .label = "4\nCannons", .fn = bingo_open_N_cannons, .args = { .count = 4 } },
-  { .label = "5\nCannons", .fn = bingo_open_N_cannons, .args = { .count = 5 } },
-  { .label = "6\nCannons", .fn = bingo_open_N_cannons, .args = { .count = 6 } },
-  { .label = "7\nCannons", .fn = bingo_open_N_cannons, .args = { .count = 7 } },
-  { .label = "8\nCannons", .fn = bingo_open_N_cannons, .args = { .count = 8 } },
-  { .label = "9\nCannons", .fn = bingo_open_N_cannons, .args = { .count = 9 } },
-  { .label = "10\nCannons", .fn = bingo_open_N_cannons, .args = { .count = 10 } },
-  { .label = "All 11\nCannons", .fn = bingo_open_N_cannons, .args = { .count = 11 } },
+  } else if (goal->fn == bingo_lose_marios_cap) {
+    // TODO
+    goal->difficulty = 1;
+    goal->flags = BINGO_FLAG_PLAYER_STATE;
 
-  { .label = "@*20\nTotal", .fn = bingo_have_N_total_stars, .args = { .count = 20 } },
-  { .label = "@*25\nTotal", .fn = bingo_have_N_total_stars, .args = { .count = 25 } },
-  { .label = "@*30\nTotal", .fn = bingo_have_N_total_stars, .args = { .count = 30 } },
-  { .label = "@*35\nTotal", .fn = bingo_have_N_total_stars, .args = { .count = 35 } },
+  } else if (goal->fn == bingo_have_specific_star) {
+    // TODO
+    goal->difficulty = 1;
+    goal->course = goal->args.course;
 
-  { .label = "$*200\nTotal", .fn = bingo_have_N_total_coins, .args = { .count = 200 } },
-  { .label = "$*250\nTotal", .fn = bingo_have_N_total_coins, .args = { .count = 250 } },
-  { .label = "$*300\nTotal", .fn = bingo_have_N_total_coins, .args = { .count = 300 } },
-  { .label = "$*350\nTotal", .fn = bingo_have_N_total_coins, .args = { .count = 350 } },
-  { .label = "$*400\nTotal", .fn = bingo_have_N_total_coins, .args = { .count = 400 } },
-  { .label = "$*450\nTotal", .fn = bingo_have_N_total_coins, .args = { .count = 450 } },
-  { .label = "$*500\nTotal", .fn = bingo_have_N_total_coins, .args = { .count = 500 } },
-  { .label = "$*550\nTotal", .fn = bingo_have_N_total_coins, .args = { .count = 550 } },
-  { .label = "$*600\nTotal", .fn = bingo_have_N_total_coins, .args = { .count = 600 } },
+  } else if (goal->fn == bingo_have_N_stars_from_set) {
+    // TODO
+    goal->difficulty = DIFFICULTY_FROM_POOL_STARS(1, 1);  // TODO count
 
-  { .label = "@*4\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 4 } },
-  { .label = "@*5\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 5 } },
-  { .label = "@*6\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 6 } },
-  { .label = "@*7\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 7 } },
-  { .label = "@*8\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 8 } },
-  { .label = "@*9\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 9 } },
-  { .label = "@*10\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 10 } },
-  { .label = "@*11\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 11 } },
-  { .label = "@*12\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 12 } },
+  } else if (goal->fn == bingo_have_N_stars_in_stage_X) {
+    // TODO
+    goal->difficulty = 1; // TODO
+    goal->course = goal->args.course;
 
-  { .label = "$*50\nin BOB", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_BOB, .count = 50 } },
-  { .label = "$*50\nin WF", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_WF, .count = 50 } },
-  { .label = "$*50\nin JRB", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_JRB, .count = 50 } },
-  { .label = "$*50\nin CCM", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_CCM, .count = 50 } },
-  { .label = "$*50\nin BBH", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_BBH, .count = 50 } },
-  { .label = "$*50\nin HMC", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_HMC, .count = 50 } },
-  { .label = "$*50\nin LLL", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_LLL, .count = 50 } },
-  { .label = "$*50\nin SSL", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_SSL, .count = 50 } },
-  { .label = "$*50\nin DDD", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_DDD, .count = 50 } },
-  { .label = "$*50\nin SL", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_SL, .count = 50 } },
-  { .label = "$*50\nin WDW", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_WDW, .count = 50 } },
-  { .label = "$*50\nin TTM", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_TTM, .count = 50 } },
-  { .label = "$*50\nin THI", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_THI, .count = 50 } },
-  { .label = "$*50\nin TTC", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_TTC, .count = 50 } },
-  { .label = "$*50\nin RR", .fn = bingo_have_N_coins_in_stage_X, .args = { .course = COURSE_RR, .count = 50 } },
+  } else if (goal->fn == bingo_have_N_coins_in_stage_X) {
+    // TODO
+    goal->difficulty = 1; // TODO
+    goal->course = goal->args.course;
 
-  { .label = "$*50\nany 1", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 50, .count2 = 1 } },
-  { .label = "$*50\nany 2", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 50, .count2 = 2 } },
-  { .label = "$*50\nany 3", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 50, .count2 = 3 } },
-  { .label = "$*50\nany 4", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 50, .count2 = 4 } },
-  { .label = "$*50\nany 5", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 50, .count2 = 5 } },
-  { .label = "$*50\nany 6", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 50, .count2 = 6 } },
+  } else if (goal->fn == bingo_have_N_total_coins) {
+    // TODO
+    goal->difficulty = DIFFICULTY_FROM_TOTAL_COINS(goal->args.count);
 
-  { .label = "$*100\nany 1", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 100, .count2 = 1 } },
-  { .label = "$*100\nany 2", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 100, .count2 = 2 } },
-  { .label = "$*100\nany 3", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 100, .count2 = 3 } },
-  { .label = "$*100\nany 4", .fn = bingo_have_N_coins_in_M_stages, .args = { .count = 100, .count2 = 4 } },
+  } else if (goal->fn == bingo_have_N_coins_in_M_stages) {
+    // TODO
+    goal->difficulty = DIFFICULTY_FROM_TOTAL_COINS(goal->args.count * goal->args.count2) + DIFFICULTY_FROM_UNIQUE_STAGES(goal->args.count2);
+    // goal->flags = BINGO_FLAG_PICK_STAGES;
 
-  { .label = "@*1\nany 6", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 1, .count2 = 6 } },
-  { .label = "@*1\nany 7", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 1, .count2 = 7 } },
-  { .label = "@*1\nany 8", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 1, .count2 = 8 } },
-  { .label = "@*1\nany 9", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 1, .count2 = 9 } },
-  { .label = "@*1\nany 10", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 1, .count2 = 10 } },
-  { .label = "@*1\nany 11", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 1, .count2 = 11 } },
-  { .label = "@*1\nany 12", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 1, .count2 = 12 } },
-  { .label = "@*1\neach", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 1, .count2 = 15 } },
+  } else if (goal->fn == bingo_have_N_stars_in_M_stages) {
+    // TODO
+    goal->difficulty = DIFFICULTY_FROM_TOTAL_STARS(goal->args.count * goal->args.count2) + DIFFICULTY_FROM_UNIQUE_STAGES(goal->args.count2);
+    // goal->flags = BINGO_FLAG_PICK_STAGES;
 
-  { .label = "@*2\nany 4", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 2, .count2 = 4 } },
-  { .label = "@*2\nany 5", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 2, .count2 = 5 } },
-  { .label = "@*2\nany 6", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 2, .count2 = 6 } },
-  { .label = "@*2\nany 7", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 2, .count2 = 7 } },
-  { .label = "@*2\nany 8", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 2, .count2 = 8 } },
-  { .label = "@*2\nany 9", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 2, .count2 = 9 } },
-  { .label = "@*2\nany 10", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 2, .count2 = 10 } },
-  { .label = "@*2\neach", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 2, .count2 = 15 } },
+  } else if (goal->fn == bingo_have_toad_star) {
+    // 12/25/35
+    goal->difficulty = 1 + DIFFICULTY_FROM_TOTAL_STARS(goal->args.star * 10 + 5 - (goal->args.star == 1 ? 3 : 0));
+    goal->flags = BINGO_FLAG_TOTAL_STARS;
 
-  { .label = "@*3\nany 2", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 3, .count2 = 2 } },
-  { .label = "@*3\nany 3", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 3, .count2 = 3 } },
-  { .label = "@*3\nany 4", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 3, .count2 = 4 } },
-  { .label = "@*3\nany 5", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 3, .count2 = 5 } },
-  { .label = "@*3\nany 6", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 3, .count2 = 6 } },
-  { .label = "@*3\nany 7", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 3, .count2 = 7 } },
-  // { .label = "@*3\nany 8", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 3, .count2 = 8 } },
-  
-  { .label = "@*4\nany 1", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 4, .count2 = 1 } },
-  { .label = "@*4\nany 2", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 4, .count2 = 2 } },
-  { .label = "@*4\nany 3", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 4, .count2 = 3 } },
-  { .label = "@*4\nany 4", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 4, .count2 = 4 } },
-  { .label = "@*4\nany 5", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 4, .count2 = 5 } },
-  // { .label = "@*4\nany 6", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 4, .count2 = 6 } },
+  } else if (goal->fn == bingo_have_mips_star) {  // unused
+    // 15/50
+    goal->difficulty = 2 + DIFFICULTY_FROM_TOTAL_STARS(goal->args.star * 35 - 20);
+    goal->flags = BINGO_FLAG_TOTAL_STARS;
 
-  { .label = "@*5\nany 1", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 5, .count2 = 1 } },
-  { .label = "@*5\nany 2", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 5, .count2 = 2 } },
-  { .label = "@*5\nany 3", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 5, .count2 = 3 } },
-  { .label = "@*5\nany 4", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 5, .count2 = 4 } },
-  
-  { .label = "All @s\nany 1", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 7, .count2 = 1 } },
-  { .label = "All @s\nany 2", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 7, .count2 = 2 } },
-  { .label = "All @s\nany 3", .fn = bingo_have_N_stars_in_M_stages, .args = { .count = 7, .count2 = 3 } },
-  
-  // { .label = "Reds\nany 5", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 5 } },
-  // { .label = "Reds\nany 6", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 6 } },
-  // { .label = "Reds\nany 7", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 7 } },
-  // { .label = "Reds\nany 8", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 8 } },
-  // { .label = "Reds\nany 9", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 9 } },
-  // { .label = "Reds\nany 10", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 10 } },
-  // { .label = "Reds\nany 11", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 11 } },
-  // { .label = "Reds\nany 12", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 12 } },
-  // { .label = "Reds\nany 13", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 13 } },
-  // { .label = "Reds\nany 14", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 14 } },
-  // { .label = "Reds\nany 15", .fn = bingo_have_N_stars_from_set, .args = { .starSet = redCoinStars, .count = 15 } },
-  
-  // { .label = "Box @s\nany 3", .fn = bingo_have_N_stars_from_set, .args = { .starSet = boxStars, .count = 3 } },
-  // { .label = "Box @s\nany 4", .fn = bingo_have_N_stars_from_set, .args = { .starSet = boxStars, .count = 4 } },
-  // { .label = "Box @s\nany 5", .fn = bingo_have_N_stars_from_set, .args = { .starSet = boxStars, .count = 5 } },
-  // { .label = "Box @s\nany 6", .fn = bingo_have_N_stars_from_set, .args = { .starSet = boxStars, .count = 6 } },
-  
-  // { .label = "Open @s\nany 5", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 5 } },
-  // { .label = "Open @s\nany 6", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 6 } },
-  // { .label = "Open @s\nany 7", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 7 } },
-  // { .label = "Open @s\nany 8", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 8 } },
-  // { .label = "Open @s\nany 9", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 9 } },
-  // { .label = "Open @s\nany 10", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 10 } },
-  // { .label = "Open @s\nany 11", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 11 } },
-  // { .label = "Open @s\nany 12", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 12 } },
-  // { .label = "Open @s\nany 13", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 13 } },
-  // { .label = "Open @s\nany 14", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 14 } },
-  // { .label = "Open @s\nany 15", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 15 } },
+  } else {
+    goal->difficulty = -1;
+  }
+}
 
-  // END
-  { .label = NULL }
-};
+bool can_goals_appear_in_a_row(struct BingoGoal* a, struct BingoGoal* b) {
+  // Goals can't have the same function, since then they would be the exact same type
+  if (a->fn == b->fn) {
+    return false;
+  }
 
-struct BingoGoal* get_possible_bingo_goals(void) {
-  return goals;
+  // If the goals are course-specific, they cannot be for the same course
+  if (a->course != 0 && a->course == b->course) {
+    return false;
+  }
+
+  // Goals can't have any other flags in common
+  if (a->flags & b->flags) {
+    return false;
+  }
+
+  return true;
+}
+
+struct BingoGoal** get_possible_bingo_goals(struct BingoConfig config) {
+  int count = 0;
+  for (struct GoalGroup* group = goalGroups; group->fn != NULL; group++) {
+    if (group->fn(config) != 0) {
+      for (struct BingoGoal* goal = group->goals; goal->label != NULL; goal++) {
+        count++;
+      }
+    } else {
+    }
+  }
+
+  struct BingoGoal** out = malloc((count + 1) * sizeof(struct BingoGoal*));
+  int index = 0;
+  for (struct GoalGroup* group = goalGroups; group->fn != NULL; group++) {
+    if (group->fn(config) != 0) {
+      for (struct BingoGoal* goal = group->goals; goal->label != NULL; goal++) {
+        calculate_difficulty_and_flags_for_goal(goal);
+        out[index++] = goal;
+      }
+    }
+  }
+  BINGO_LOG("finished choosing goals; i=%u, c=%u", index, count);
+  out[count] = NULL;
+  return out;
 }

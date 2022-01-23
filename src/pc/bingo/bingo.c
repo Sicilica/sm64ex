@@ -14,13 +14,15 @@
 #include "game/segment2.h"
 #include "bingo.h"
 #include "locations.h"
+#include "network.h"
 #include "players.h"
 #include "text.h"
 
 bool displayFullsizeBingoBoard = FALSE;
 bool bingoInitComplete = FALSE;
 
-char bingoDebugBuffer[256];
+char bingoMsgBuffer[256];
+int bingoMsgTimer;
 
 void init_bingo(void) {
     if (bingoInitComplete) {
@@ -29,9 +31,11 @@ void init_bingo(void) {
 
     init_bingo_player_location_details();
 
-    generate_bingo_board(time(NULL));
+    generate_bingo_board(time(NULL), gBingoConfig);
 
     bingoInitComplete = TRUE;
+
+    BINGO_MSG("BINGO %s", BINGO_VERSION);
 }
 
 void cleanup_bingo(void) {
@@ -48,9 +52,18 @@ void handle_bingo_input(void) {
     // here too should be removed probs
     init_bingo();
 
+    // TODO this should absolutely not be here
+    bingo_update_timer();
+
     if (gPlayer3Controller->buttonDown & L_TRIG) {
         displayFullsizeBingoBoard = TRUE;
     } else {
         displayFullsizeBingoBoard = FALSE;
     }
+}
+
+void bingo_request_new_board(void) {
+    BINGO_LOG("requesting new board");
+    bingo_network_request_new_board(time(NULL));
+    return true;
 }

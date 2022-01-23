@@ -152,10 +152,14 @@ void render_bingo_board(void) {
     // TODO not the best place for this, and we never actually free
     init_bingo();
 
-    print_text(GFX_DIMENSIONS_RECT_FROM_LEFT_EDGE(20), 0, BINGO_VERSION);
+    if (bingoMsgTimer > 0) {
+        bingoMsgTimer--;
+        print_text(GFX_DIMENSIONS_RECT_FROM_LEFT_EDGE(20), 0, bingoMsgBuffer);
+    }
+    // print_text(GFX_DIMENSIONS_RECT_FROM_LEFT_EDGE(20), 0, BINGO_VERSION);
     // snprintf(bingoDebugBuffer, 256, "%d %d", gCurrSaveFileNum, gCurrCourseNum);
-    snprintf(bingoDebugBuffer, 256, "%x", gBingoBoardSeed);
-    print_text(GFX_DIMENSIONS_RECT_FROM_RIGHT_EDGE(120), 0, bingoDebugBuffer);
+    // snprintf(bingoDebugBuffer, 256, "%x", gBingoBoardSeed);
+    // print_text(GFX_DIMENSIONS_RECT_FROM_RIGHT_EDGE(120), 0, bingoDebugBuffer);
 
     if (displayFullsizeBingoBoard) {
         render_fullsize_bingo_board();

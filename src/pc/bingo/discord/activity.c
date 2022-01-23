@@ -5,6 +5,7 @@
 #include "lobby.h"
 #include "pc/bingo/locations.h"
 #include "pc/bingo/players.h"
+#include "pc/bingo/timer.h"
 
 struct DiscordActivity gDiscordActivity;
 struct {
@@ -70,8 +71,11 @@ void update_activity(void) {
       gDiscordActivity.party.size.max_size = BINGO_MAX_PLAYERS;
     }
   }
-  // TODO time stuff, which also needs to factor into updates
-  gDiscordActivity.timestamps.start = 0;
+  if (gBingoTimer.running) {
+    gDiscordActivity.timestamps.start = gBingoTimer.startTime;
+  } else {
+    gDiscordActivity.timestamps.start = 0;
+  }
 
   // Execute
   gDiscord.activity->update_activity(gDiscord.activity, &gDiscordActivity, NULL, update_activity_callback);

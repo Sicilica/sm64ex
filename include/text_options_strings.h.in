@@ -11,6 +11,7 @@
 #define TEXT_OPT_VIDEO     _("DISPLAY")
 #define TEXT_OPT_AUDIO     _("SOUND")
 #define TEXT_OPT_CHEATS    _("CHEATS")
+#define TEXT_OPT_BINGO     _("BINGO")
 
 // Markers
 
@@ -58,6 +59,15 @@
 #define TEXT_OPT_THREEPT   _("THREE POINT")
 #define TEXT_OPT_APPLY     _("APPLY")
 #define TEXT_OPT_RESETWND  _("RESET WINDOW")
+#define TEXT_OPT_GENERATE_NEW_BOARD _("GENERATE NEW BOARD")
+#define TEXT_OPT_CFG_BOSS_STARS _("BOSS STARS")
+#define TEXT_OPT_CFG_BOX_STARS _("BOX STARS")
+#define TEXT_OPT_CFG_CAP_STAGE_STARS _("CAP STAGE STARS")
+#define TEXT_OPT_CFG_FREESTANDING_STARS _("FREESTANDING STARS")
+#define TEXT_OPT_CFG_RACE_STARS _("RACE STARS")
+#define TEXT_OPT_CFG_RED_COIN_STARS _("RED COIN STARS")
+#define TEXT_OPT_CFG_SECRETS_STARS _("SECRETS STARS")
+#define TEXT_OPT_CFG_SLIDE_STARS _("SLIDE STARS")
 
 #define TEXT_BIND_A        _("A BUTTON")
 #define TEXT_BIND_B        _("B BUTTON")
@@ -122,6 +132,15 @@
 #define TEXT_OPT_THREEPT   _("Three-point")
 #define TEXT_OPT_APPLY     _("Apply")
 #define TEXT_OPT_RESETWND  _("Reset Window")
+#define TEXT_OPT_GENERATE_NEW_BOARD _("Generate New Board")
+#define TEXT_OPT_CFG_BOSS_STARS _("Boss Stars")
+#define TEXT_OPT_CFG_BOX_STARS _("Box Stars")
+#define TEXT_OPT_CFG_CAP_STAGE_STARS _("Cap Stage Stars")
+#define TEXT_OPT_CFG_FREESTANDING_STARS _("Freestanding Stars")
+#define TEXT_OPT_CFG_RACE_STARS _("Race Stars")
+#define TEXT_OPT_CFG_RED_COIN_STARS _("Red Coin Stars")
+#define TEXT_OPT_CFG_SECRETS_STARS _("Secrets Stars")
+#define TEXT_OPT_CFG_SLIDE_STARS _("Slide Stars")
 
 #define TEXT_BIND_A        _("A Button")
 #define TEXT_BIND_B        _("B Button")

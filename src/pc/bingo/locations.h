@@ -4,6 +4,9 @@
 #include "sm64.h"
 
 #define COURSE_NUM_TO_LOCATION(x) (x)
+#define LOCATION_TITLE (COURSE_MAX+1)
+#define LOCATION_CASTLE (0)
+#define LOCATION_CREDITS (COURSE_MAX)
 
 typedef s16 BingoPlayerLocation;
 

@@ -2,20 +2,37 @@
 #define BINGO_H
 
 #include <stdbool.h>
+#include <stdio.h>
 
+#include <PR/ultratypes.h>
 #include "game/save_file.h"
 
-#define BINGO_VERSION "ALPHA 38"
+#define BINGO_VERSION "ALPHA 50"
 #define BINGO_MAX_PLAYERS 8
+
+#define BINGO_LOG(...) printf("[BINGO/log] ");printf(__VA_ARGS__);printf("\n")
+#define BINGO_MSG(...) snprintf(bingoMsgBuffer, 256, __VA_ARGS__);bingoMsgTimer=30*5;
 
 extern bool displayFullsizeBingoBoard;
 extern bool bingoInitComplete;
 
-extern char bingoDebugBuffer[];
+extern char bingoMsgBuffer[];
+extern int bingoMsgTimer;
 
 void init_bingo(void);
 void handle_bingo_input(void);
 void render_bingo_board(void);
+
+struct BingoConfig {
+  bool bossStars;
+  bool boxStars;
+  bool capStageStars;
+  bool freestandingStars;
+  bool raceStars;
+  bool redCoinStars;
+  bool secretsStars;
+  bool slideStars;
+};
 
 struct BingoStarRef {
   enum CourseNum course;
@@ -36,9 +53,15 @@ struct BingoGoal {
   const char* label;
   BingoGoalFn fn;
   struct BingoGoalArgs args;
+
+  // These 3 fields are used for building a valid board.
+  enum CourseNum course;
+  s32 difficulty;
+  s32 flags;
 };
 
-struct BingoGoal* get_possible_bingo_goals(void);
+bool can_goals_appear_in_a_row(struct BingoGoal* a, struct BingoGoal* b);
+struct BingoGoal** get_possible_bingo_goals(struct BingoConfig config);
 
 struct BingoBoardCell {
   struct BingoGoal* goal;
@@ -47,8 +70,16 @@ struct BingoBoardCell {
 
 extern struct BingoBoardCell gBingoBoard[];
 extern unsigned int gBingoBoardSeed;
+extern struct BingoConfig gBingoConfig;
 
 void clear_bingo_board(void);
-void generate_bingo_board(unsigned int seed);
+void generate_bingo_board(unsigned int seed, struct BingoConfig config);
+
+void bingo_request_new_board(void);
+
+struct BingoConfig bingo_config_from_string(const char* s);
+void bingo_config_to_string(struct BingoConfig config, char* buf, int maxlen);
+
+void bingo_set_player_on_title(bool state);
 
 #endif

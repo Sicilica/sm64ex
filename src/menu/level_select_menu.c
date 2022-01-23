@@ -14,6 +14,8 @@
 #include "seq_ids.h"
 #include "sm64.h"
 
+#include "pc/bingo/bingo.h"
+
 #define PRESS_START_DEMO_TIMER 800
 
 #define STUB_LEVEL(textname, _1, _2, _3, _4, _5, _6, _7, _8) textname,
@@ -209,6 +211,8 @@ int intro_play_its_a_me_mario(void) {
 
 s32 lvl_intro_update(s16 arg1, UNUSED s32 arg2) {
     s32 retVar;
+
+    bingo_set_player_on_title(TRUE);
 
     switch (arg1) {
         case 0:

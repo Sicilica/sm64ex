@@ -1,14 +1,15 @@
 #include "locations.h"
 
 #include "game/area.h"
+#include "game/level_update.h"
 
 #include "bingo.h"
 #include "text.h"
 
-#define LOCATION_LOBBY (COURSE_MAX+1)
+bool gOnTitleScreen;
 
-extern struct BingoPlayerLocationDetails bingoPlayerLocationDetails[28] = {
-  { .name = "" },
+struct BingoPlayerLocationDetails bingoPlayerLocationDetails[28] = {
+  { .name = "Castle" },
   { .name = "BOB" },
   { .name = "WF" },
   { .name = "JRB" },
@@ -34,14 +35,24 @@ extern struct BingoPlayerLocationDetails bingoPlayerLocationDetails[28] = {
   { .name = "WMOTR" },
   { .name = "SA" },
   { .name = "Credits" },
-  { .name = "Lobby" },
+  // Above: actual course nums defined in game
+  // Below: virtual locations
+  { .name = "Title" },
   { .name = NULL },
 };
 
 BingoPlayerLocation get_current_player_location(void) {
-  // TODO find out if we're on the title screen or in the credits
-  if (gCurrCourseNum == 0) {
-    return LOCATION_LOBBY;
+  if (gOnTitleScreen) {
+    // this is used for both the title screen and file select
+    return LOCATION_TITLE;
+  }
+  if (gMarioState->action == ACT_INTRO_CUTSCENE) {
+    // listening to peach letter; we actually already know that we're in course 0 in this case
+    return LOCATION_CASTLE;
+  }
+  if (gMarioState->action == ACT_JUMBO_STAR_CUTSCENE || gMarioState->action == ACT_END_PEACH_CUTSCENE || gMarioState->action == ACT_CREDITS_CUTSCENE || gMarioState->action == ACT_END_WAVING_CUTSCENE) {
+    // grand star cutscene, both peach cutscenes, credit sequence, cake screen
+    return LOCATION_CREDITS;
   }
   return gCurrCourseNum;
 }
@@ -50,4 +61,8 @@ void init_bingo_player_location_details(void) {
   for (struct BingoPlayerLocationDetails* it = bingoPlayerLocationDetails; it->name != NULL; it++) {
     it->dialogName = alloc_and_convert_chars_to_dialog(it->name);
   }
+}
+
+void bingo_set_player_on_title(bool state) {
+  gOnTitleScreen = state;
 }

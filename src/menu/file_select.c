@@ -21,6 +21,8 @@
 #include "sm64.h"
 #include "text_strings.h"
 
+#include "pc/bingo/bingo.h"
+
 #include "eu_translation.h"
 #ifdef VERSION_EU
 #undef LANGUAGE_FUNCTION
@@ -1116,6 +1118,7 @@ void check_sound_mode_menu_clicked_buttons(struct Object *soundModeButton) {
  */
 void load_main_menu_save_file(struct Object *fileButton, s32 fileNum) {
     if (fileButton->oMenuButtonState == MENU_BUTTON_STATE_FULLSCREEN) {
+        bingo_set_player_on_title(FALSE);
         sSelectedFileNum = fileNum;
     }
 }

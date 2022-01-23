@@ -27,7 +27,7 @@ void convert_chars_to_dialog(const char* raw, u8* out, int outlen) {
             case '&': out[i++] = 0xE5; break;
             case '!': out[i++] = 0xF2; break;
             case '?': out[i++] = 0xF4; break;
-            case '_': out[i++] = 0xF8; /*ellipsis*/ break;
+            case '_': out[i++] = 0x9E; break;// 0xF8; /*ellipsis*/ break;
             case '$': out[i++] = 0xF9; /*coin*/ break;
             case '@': out[i++] = 0xFA; /*filled star*/ break;
             case '*': out[i++] = 0xFB; /*multiply*/ break;

@@ -16,6 +16,7 @@
 #include "game/game_init.h"
 #include "game/ingame_menu.h"
 #include "game/options_menu.h"
+#include "pc/bingo/bingo.h"
 #include "pc/pc_main.h"
 #include "pc/cliopts.h"
 #include "pc/cheats.h"
@@ -60,6 +61,7 @@ static const u8 menuStr[][32] = {
     { TEXT_OPT_AUDIO },
     { TEXT_EXIT_GAME },
     { TEXT_OPT_CHEATS },
+    { TEXT_OPT_BINGO },
 };
 
 static const u8 optsCameraStr[][32] = {
@@ -73,6 +75,18 @@ static const u8 optsCameraStr[][32] = {
     { TEXT_OPT_MOUSE },
     { TEXT_OPT_CAMD },
     { TEXT_OPT_CAMON },
+};
+
+static const u8 optsBingoStr[][32] = {
+    { TEXT_OPT_GENERATE_NEW_BOARD },
+    { TEXT_OPT_CFG_BOSS_STARS },
+    { TEXT_OPT_CFG_BOX_STARS },
+    { TEXT_OPT_CFG_CAP_STAGE_STARS },
+    { TEXT_OPT_CFG_FREESTANDING_STARS },
+    { TEXT_OPT_CFG_RACE_STARS },
+    { TEXT_OPT_CFG_RED_COIN_STARS },
+    { TEXT_OPT_CFG_SECRETS_STARS },
+    { TEXT_OPT_CFG_SLIDE_STARS },
 };
 
 static const u8 optsVideoStr[][32] = {
@@ -202,6 +216,10 @@ struct SubMenu {
 
 /* button action functions */
 
+static void optbingo_generate_new_board(UNUSED struct Option *self, s32 arg) {
+    if (!arg) bingo_request_new_board();
+}
+
 static void optmenu_act_exit(UNUSED struct Option *self, s32 arg) {
     if (!arg) game_exit(); // only exit on A press and not directions
 }
@@ -234,6 +252,18 @@ static struct Option optsCamera[] = {
     DEF_OPT_SCROLL( optsCameraStr[8], &configCameraDegrade, 0, 100, 1 ),
 };
 #endif
+
+static struct Option optsBingo[] = {
+    DEF_OPT_BUTTON( optsBingoStr[0], optbingo_generate_new_board),
+    DEF_OPT_TOGGLE( optsBingoStr[1], &gBingoConfig.bossStars),
+    DEF_OPT_TOGGLE( optsBingoStr[2], &gBingoConfig.boxStars),
+    DEF_OPT_TOGGLE( optsBingoStr[3], &gBingoConfig.capStageStars),
+    DEF_OPT_TOGGLE( optsBingoStr[4], &gBingoConfig.freestandingStars),
+    DEF_OPT_TOGGLE( optsBingoStr[5], &gBingoConfig.raceStars),
+    DEF_OPT_TOGGLE( optsBingoStr[6], &gBingoConfig.redCoinStars),
+    DEF_OPT_TOGGLE( optsBingoStr[7], &gBingoConfig.secretsStars),
+    DEF_OPT_TOGGLE( optsBingoStr[8], &gBingoConfig.slideStars),
+};
 
 static struct Option optsControls[] = {
     DEF_OPT_BIND( bindStr[ 2], configKeyA ),
@@ -290,6 +320,7 @@ static struct Option optsCheats[] = {
 #ifdef BETTERCAMERA
 static struct SubMenu menuCamera   = DEF_SUBMENU( menuStr[1], optsCamera );
 #endif
+static struct SubMenu menuBingo    = DEF_SUBMENU( menuStr[7], optsBingo );
 static struct SubMenu menuControls = DEF_SUBMENU( menuStr[2], optsControls );
 static struct SubMenu menuVideo    = DEF_SUBMENU( menuStr[3], optsVideo );
 static struct SubMenu menuAudio    = DEF_SUBMENU( menuStr[4], optsAudio );
@@ -301,6 +332,7 @@ static struct Option optsMain[] = {
 #ifdef BETTERCAMERA
     DEF_OPT_SUBMENU( menuStr[1], &menuCamera ),
 #endif
+    DEF_OPT_SUBMENU( menuStr[7], &menuBingo ),
     DEF_OPT_SUBMENU( menuStr[2], &menuControls ),
     DEF_OPT_SUBMENU( menuStr[3], &menuVideo ),
     DEF_OPT_SUBMENU( menuStr[4], &menuAudio ),

@@ -10,6 +10,7 @@
 #include "user.h"
 
 #define METADATA_BINGO_VERSION "bingo_version"
+#define METADATA_BINGO_CONFIG "bingo_config"
 #define METADATA_BINGO_SEED "bingo_seed"
 #define METADATA_COLOR "color"
 #define METADATA_LOCATION "location"
@@ -42,6 +43,8 @@ void connect_lobby_callback(UNUSED void* callbackData, enum EDiscordResult resul
   DISCORD_LOG("connected to lobby %lld", lobby->id);
 
   set_current_lobby(lobby);
+
+  BINGO_MSG("CONNECTED");
 }
 
 void create_lobby_callback(UNUSED void* callbackData, enum EDiscordResult result, struct DiscordLobby* lobby) {
@@ -61,6 +64,10 @@ void create_lobby_callback(UNUSED void* callbackData, enum EDiscordResult result
 void disconnect_lobby_callback(DiscordLobbyId callbackData, enum EDiscordResult result) {
   DISCORD_CHECK(result, "disconnect_lobby");
   DISCORD_LOG("disconnected from lobby %lld", callbackData);
+}
+
+void update_lobby_callback(UNUSED void* callbackData, enum EDiscordResult result) {
+  DISCORD_CHECK(result, "update_lobby");
 }
 
 void update_member_callback(UNUSED void* callbackData, enum EDiscordResult result) {
@@ -88,6 +95,9 @@ void create_new_lobby(void) {
   char bingoSeed[32];
   snprintf(bingoSeed, 32, "%x", gBingoBoardSeed);
   DISCORD_CHECK(txn->set_metadata(txn, METADATA_BINGO_SEED, bingoSeed), "set_metadata[BINGO_SEED]");
+  char bingoConfig[32];
+  bingo_config_to_string(gBingoConfig, bingoConfig, 32);
+  DISCORD_CHECK(txn->set_metadata(txn, METADATA_BINGO_CONFIG, bingoConfig), "set_metadata[BINGO_CONFIG]");
   gDiscord.lobby->create_lobby(gDiscord.lobby, txn, NULL, create_lobby_callback);
 }
 
@@ -106,14 +116,18 @@ void update_lobby(void) {
   }
 }
 
-void receive_bingo_seed(int64_t lobbyID) {
+void receive_bingo_board(int64_t lobbyID) {
   DISCORD_CHECK(gDiscord.lobby->get_lobby_metadata_value(gDiscord.lobby, lobbyID, METADATA_BINGO_SEED, &metadataReceiveBuf), "get_lobby_metadata[BINGO_SEED]");
   DISCORD_LOG("got bingo seed %s", metadataReceiveBuf);
-  generate_bingo_board(strtol(metadataReceiveBuf, NULL, 16));
+  unsigned int bingoSeed = strtol(metadataReceiveBuf, NULL, 16);
+  DISCORD_CHECK(gDiscord.lobby->get_lobby_metadata_value(gDiscord.lobby, lobbyID, METADATA_BINGO_CONFIG, &metadataReceiveBuf), "get_lobby_metadata[BINGO_CONFIG]");
+  DISCORD_LOG("got bingo config %s", metadataReceiveBuf);
+  struct BingoConfig bingoConfig = bingo_config_from_string(metadataReceiveBuf);
+  generate_bingo_board(bingoSeed, bingoConfig);
   for (int i = 0; i < BINGO_MAX_PLAYERS; i++) {
     gBingoPlayers[i].completion = 0;
   }
-  DISCORD_LOG("synchronized bingo seed to %u", gBingoBoardSeed);
+  DISCORD_LOG("synchronized bingo board to seed=%u, config=%s", gBingoBoardSeed, metadataReceiveBuf);
 }
 
 void receive_member_meta(int64_t lobbyID, int64_t userID, int index) {
@@ -152,6 +166,22 @@ void receive_new_member(int64_t lobbyID, int64_t userID, bool fetchMetadata) {
   DISCORD_CHECK(gDiscord.lobby->get_member_user(gDiscord.lobby, lobbyID, userID, &user), "get_member_user");
   convert_chars_to_dialog(user.username, gBingoPlayers[index].dialogName, BINGO_PLAYER_NAME_MAXLEN);
   DISCORD_LOG("finished connecting player %s", user.username);
+}
+
+void bingo_network_request_new_board(unsigned int seed) {
+  if (gCurrentLobbyID != 0) {
+    DiscordLobbyId lobbyID = gCurrentLobbyID;
+
+    struct IDiscordLobbyTransaction* txn;
+    DISCORD_CHECK(gDiscord.lobby->get_lobby_update_transaction(gDiscord.lobby, lobbyID, &txn), "get_lobby_update_transaction");
+    char bingoSeed[32];
+    snprintf(bingoSeed, 32, "%x", seed);
+    DISCORD_CHECK(txn->set_metadata(txn, METADATA_BINGO_SEED, bingoSeed), "set_metadata[BINGO_SEED]");
+    char bingoConfig[32];
+    bingo_config_to_string(gBingoConfig, bingoConfig, 32);
+    DISCORD_CHECK(txn->set_metadata(txn, METADATA_BINGO_CONFIG, bingoConfig), "set_metadata[BINGO_CONFIG]");
+    gDiscord.lobby->update_lobby(gDiscord.lobby, lobbyID, txn, NULL, update_lobby_callback);
+  }
 }
 
 void send_member_metadata(int64_t lobbyID) {
@@ -206,7 +236,7 @@ void set_current_lobby(struct DiscordLobby* lobby) {
   }
 
   // Sync bingo board
-  receive_bingo_seed(lobby->id);
+  receive_bingo_board(lobby->id);
 
   // Initialize all previously connected members
   int32_t memberCount;
@@ -263,11 +293,14 @@ int get_player_index_from_user_id(int64_t userID) {
 }
 
 void on_lobby_update(UNUSED void* eventData, int64_t lobbyID) {
-  receive_bingo_seed(lobbyID);
+  receive_bingo_board(lobbyID);
 }
 
 void on_member_connect(UNUSED void* eventData, int64_t lobbyID, int64_t userID) {
   receive_new_member(lobbyID, userID, true);
+  if (userID != gCurrentDiscordUserID) {
+    BINGO_MSG("USER JOINED");
+  }
 }
 
 void on_member_disconnect(UNUSED void* eventData, int64_t lobbyID, int64_t userID) {

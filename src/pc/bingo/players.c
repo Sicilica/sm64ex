@@ -37,6 +37,7 @@ BingoPlayerColor pick_unused_color(BingoPlayerColor preferredColor) {
   }
 
   // Panic!
+  BINGO_MSG("ERR NO AVAILABLE COLORS");
   return BINGO_PLAYER_COLOR(255, 255, 255);
 }
 
@@ -56,6 +57,7 @@ int get_empty_player_index(void) {
       return i;
     }
   }
-  // TODO Panic!
+  BINGO_LOG("no player slots available!");
+  BINGO_MSG("ERR NO PLAYER SLOTS");
   return BINGO_MAX_PLAYERS;
 }
