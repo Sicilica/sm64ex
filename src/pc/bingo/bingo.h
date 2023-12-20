@@ -7,7 +7,7 @@
 #include <PR/ultratypes.h>
 #include "game/save_file.h"
 
-#define BINGO_VERSION "ALPHA 50"
+#define BINGO_VERSION "ALPHA 51"
 #define BINGO_MAX_PLAYERS 8
 
 #define BINGO_LOG(...) printf("[BINGO/log] ");printf(__VA_ARGS__);printf("\n")
