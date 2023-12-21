@@ -1,11 +1,15 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "sm64.h"
 #include "game/level_update.h"
 
 #include "bingo.h"
 #include "save.h"
+
+#define TOTAL_CANNONS 11
+#define TOTAL_CASTLE_STARS 15
 
 // NOTE
 // gCurrCourseNum gives the current level, or 0 for castle / title / etc
@@ -22,7 +26,7 @@ bool bingo_open_N_cannons(struct BingoGoalArgs args) {
   return actual >= args.count;
 }
 
-bool bingo_have_N_bonus_stars(struct BingoGoalArgs args) {
+bool bingo_have_N_castle_stars(struct BingoGoalArgs args) {
   s32 actual = save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_BONUS_STAGES - 1, COURSE_MAX - 1);
   return actual >= args.count;
 }
@@ -226,6 +230,97 @@ struct BingoStarRef bossStars[] = {
   { .course = COURSE_NONE }
 };
 
+s16 starset_size(struct BingoStarRef* starSet) {
+  for (s16 size = 0; ; size++) {
+    if (starSet[size].course == COURSE_NONE) {
+      return size;
+    }
+  }
+}
+
+#define DEF_STARSET_METRIC(STARSET, LABEL) \
+  bool goal_is_starset_ ## STARSET (struct BingoGoal* goal) { return goal->fn == bingo_have_N_stars_from_set && goal->args.starSet == STARSET; } \
+  s16 starset_count_ ## STARSET (void) { return bingo_get_star_count_from_set(STARSET); } \
+  s16 starset_max_ ## STARSET (void) { return starset_size(STARSET); } \
+  struct BingoGoalMetric starset ## STARSET ## Metric = { .label = LABEL " @s", .includesGoal = goal_is_starset_ ## STARSET, .currentCount = starset_count_ ## STARSET, .calcMaximum = starset_max_ ## STARSET };
+
+#define STARSET_METRIC(STARSET) &starset ## STARSET ## Metric
+
+DEF_STARSET_METRIC(bossStars, "Boss")
+DEF_STARSET_METRIC(boxStars, "Box")
+DEF_STARSET_METRIC(freestandingStars, "Open")
+DEF_STARSET_METRIC(redCoinStars, "Reds")
+DEF_STARSET_METRIC(raceStars, "Race")
+DEF_STARSET_METRIC(secretsStars, "Secrets")
+DEF_STARSET_METRIC(slideStars, "Slide")
+
+s16 total_cannons(void) {
+  return TOTAL_CANNONS;
+}
+
+s16 cannons_count(void) {
+  return save_file_get_total_cannon_count(gCurrSaveFileNum - 1);
+}
+
+bool goal_is_castle_stars(struct BingoGoal* goal) {
+  return goal->fn == bingo_have_N_castle_stars;
+}
+
+s16 total_castle_stars(void) {
+  return TOTAL_CASTLE_STARS;
+}
+
+s16 castle_stars_count(void) {
+  return save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_BONUS_STAGES - 1, COURSE_MAX - 1);
+}
+
+bool goal_is_cannons(struct BingoGoal* goal) {
+  return goal->fn == bingo_open_N_cannons;
+}
+
+s16 total_coins(void) {
+  return save_file_get_total_coin_count(gCurrSaveFileNum - 1);
+}
+
+bool goal_is_total_coins(struct BingoGoal* goal) {
+  return goal->fn == bingo_have_N_total_coins;
+}
+
+struct BingoGoalMetric cannonsMetric = {
+  .label = "Cannons",
+  .includesGoal = goal_is_cannons,
+  .currentCount = cannons_count,
+  .calcMaximum = total_cannons,
+};
+
+struct BingoGoalMetric castleStarsMetric = {
+  .label = "Castle @s",
+  .includesGoal = goal_is_castle_stars,
+  .currentCount = castle_stars_count,
+  .calcMaximum = total_castle_stars,
+};
+
+struct BingoGoalMetric totalCoinsMetric = {
+  .label = "Total Coins",
+  .includesGoal = goal_is_total_coins,
+  .currentCount = total_coins,
+  .calcMaximum = NULL,
+};
+
+struct BingoGoalMetric* gBingoMetrics[] = {
+  &cannonsMetric,
+  &totalCoinsMetric,
+  STARSET_METRIC(slideStars),
+  STARSET_METRIC(secretsStars),
+  STARSET_METRIC(redCoinStars),
+  STARSET_METRIC(raceStars),
+  STARSET_METRIC(freestandingStars),
+  &castleStarsMetric,
+  STARSET_METRIC(boxStars),
+  STARSET_METRIC(bossStars),
+  NULL,
+};
+
 #define DEF_GOAL_GROUP(NAME, USE_FN, GOAL_LIST) \
   bool group_ ## NAME ## _use(struct BingoConfig config) USE_FN \
   struct BingoGoal group_ ## NAME ## _goals[] = { GOAL_LIST DEF_GOAL( .label = NULL ) };
@@ -274,15 +369,15 @@ DEF_GOAL_GROUP(CAP_STAGE_STARS, {
 DEF_GOAL_GROUP(CASTLE_STARS, {
   return true;
 },
-  DEF_GOAL( .label = "@*4\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 4 } )
-  DEF_GOAL( .label = "@*5\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 5 } )
-  DEF_GOAL( .label = "@*6\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 6 } )
-  DEF_GOAL( .label = "@*7\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 7 } )
-  DEF_GOAL( .label = "@*8\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 8 } )
-  DEF_GOAL( .label = "@*9\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 9 } )
-  DEF_GOAL( .label = "@*10\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 10 } )
-  DEF_GOAL( .label = "@*11\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 11 } )
-  DEF_GOAL( .label = "@*12\nBonus", .fn = bingo_have_N_bonus_stars, .args = { .count = 12 } )
+  DEF_GOAL( .label = "@*4\nCastle", .fn = bingo_have_N_castle_stars, .args = { .count = 4 } )
+  DEF_GOAL( .label = "@*5\nCastle", .fn = bingo_have_N_castle_stars, .args = { .count = 5 } )
+  DEF_GOAL( .label = "@*6\nCastle", .fn = bingo_have_N_castle_stars, .args = { .count = 6 } )
+  DEF_GOAL( .label = "@*7\nCastle", .fn = bingo_have_N_castle_stars, .args = { .count = 7 } )
+  DEF_GOAL( .label = "@*8\nCastle", .fn = bingo_have_N_castle_stars, .args = { .count = 8 } )
+  DEF_GOAL( .label = "@*9\nCastle", .fn = bingo_have_N_castle_stars, .args = { .count = 9 } )
+  DEF_GOAL( .label = "@*10\nCastle", .fn = bingo_have_N_castle_stars, .args = { .count = 10 } )
+  DEF_GOAL( .label = "@*11\nCastle", .fn = bingo_have_N_castle_stars, .args = { .count = 11 } )
+  DEF_GOAL( .label = "@*12\nCastle", .fn = bingo_have_N_castle_stars, .args = { .count = 12 } )
 )
 
 DEF_GOAL_GROUP(FREESTANDING_STARS, {
@@ -301,11 +396,27 @@ DEF_GOAL_GROUP(FREESTANDING_STARS, {
   DEF_GOAL( .label = "Open @s\nany 15", .fn = bingo_have_N_stars_from_set, .args = { .starSet = freestandingStars, .count = 15 } )
 )
 
+DEF_GOAL_GROUP(EXTRA_LIVES, {
+  return config.extraLives;
+},
+  DEF_GOAL( .label = "10\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 10 } )
+  // DEF_GOAL( .label = "11\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 11 } )
+  DEF_GOAL( .label = "12\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 12 } )
+  // DEF_GOAL( .label = "13\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 13 } )
+  // DEF_GOAL( .label = "14\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 14 } )
+  DEF_GOAL( .label = "15\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 15 } )
+  // DEF_GOAL( .label = "16\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 16 } )
+  // DEF_GOAL( .label = "17\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 17 } )
+  DEF_GOAL( .label = "18\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 18 } )
+  // DEF_GOAL( .label = "19\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 19 } )
+  DEF_GOAL( .label = "20\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 20 } )
+)
+
 DEF_GOAL_GROUP(MISC, {
   return true;
 },
   DEF_GOAL( .label = "Lose\nCap", .fn = bingo_lose_marios_cap )
-  DEF_GOAL( .label = "0\nLives", .fn = bingo_have_no_lives )
+  DEF_GOAL( .label = "Zero\nLives", .fn = bingo_have_no_lives )
   DEF_GOAL( .label = "Toad 2\n(@*25)", .fn = bingo_have_toad_star, .args = { .star = 2 } )
   DEF_GOAL( .label = "Toad 3\n(@*35)", .fn = bingo_have_toad_star, .args = { .star = 3 } )
   // DEF_GOAL( .label = "MIPS 2\n(@*50)", .fn = bingo_have_mips_star, .args = { .star = 2 } )
@@ -560,6 +671,7 @@ struct GoalGroup goalGroups[] = {
   GOAL_GROUP_REF(CAP_STAGE_STARS)
   GOAL_GROUP_REF(CASTLE_STARS)
   GOAL_GROUP_REF(FREESTANDING_STARS)
+  GOAL_GROUP_REF(EXTRA_LIVES)
   GOAL_GROUP_REF(MISC)
   GOAL_GROUP_REF(PICK_STAGE_COINS)
   GOAL_GROUP_REF(PICK_STAGE_STARS)
@@ -576,7 +688,8 @@ struct GoalGroup goalGroups[] = {
 
 #define BINGO_FLAG_PLAYER_STATE (1 << 0)
 #define BINGO_FLAG_TOTAL_STARS (1 << 1)
-// #define BINGO_FLAG_PICK_STAGES (1 << 2)
+#define BINGO_FLAG_LIVES (1 << 2) // technically this is already covered by PLAYER_STATE
+// #define BINGO_FLAG_PICK_STAGES (1 << 3)
 
 // Stars 17-24 are worth 1 difficulty each. Stars 25-34 are worth 2 each. Stars 35+ are worth 3 each.
 #define DIFFICULTY_FROM_TOTAL_STARS(x) (((x) > 16 ? (x) - 16 : 0) + ((x) > 25 ? (x) - 25 : 0) + ((x) > 35 ? (x) - 35 : 0))
@@ -594,21 +707,23 @@ void calculate_difficulty_and_flags_for_goal(struct BingoGoal* goal) {
 
   } else if (goal->fn == bingo_open_N_cannons) {
     // TODO
-    goal->difficulty = DIFFICULTY_FROM_POOL_STARS(goal->args.count, 11);
+    goal->difficulty = DIFFICULTY_FROM_POOL_STARS(goal->args.count, TOTAL_CANNONS);
 
-  } else if (goal->fn == bingo_have_N_bonus_stars) {
+  } else if (goal->fn == bingo_have_N_castle_stars) {
     // TODO
-    goal->difficulty = DIFFICULTY_FROM_POOL_STARS(goal->args.count, 15);
+    goal->difficulty = DIFFICULTY_FROM_POOL_STARS(goal->args.count, TOTAL_CASTLE_STARS);
 
-  } else if (goal->fn == bingo_have_at_least_N_lives) { // unused
+  } else if (goal->fn == bingo_have_at_least_N_lives) {
     // TODO
     goal->difficulty = 1;
     goal->flags = BINGO_FLAG_PLAYER_STATE;
+    goal->flags |= BINGO_FLAG_LIVES;
 
   } else if (goal->fn == bingo_have_no_lives) {
     // TODO
     goal->difficulty = 1;
     goal->flags = BINGO_FLAG_PLAYER_STATE;
+    goal->flags |= BINGO_FLAG_LIVES;
 
   } else if (goal->fn == bingo_lose_marios_cap) {
     // TODO
