@@ -8,7 +8,7 @@
 
 bool gOnTitleScreen;
 
-struct BingoPlayerLocationDetails bingoPlayerLocationDetails[28] = {
+struct BingoPlayerLocationDetails bingoPlayerLocationDetails[] = {
   { .name = "Castle" },
   { .name = "BOB" },
   { .name = "WF" },
@@ -38,6 +38,7 @@ struct BingoPlayerLocationDetails bingoPlayerLocationDetails[28] = {
   // Above: actual course nums defined in game
   // Below: virtual locations
   { .name = "Title" },
+  { .name = "Intro" },
   { .name = NULL },
 };
 
@@ -48,7 +49,7 @@ BingoPlayerLocation get_current_player_location(void) {
   }
   if (gMarioState->action == ACT_INTRO_CUTSCENE) {
     // listening to peach letter; we actually already know that we're in course 0 in this case
-    return LOCATION_CASTLE;
+    return LOCATION_INTRO;
   }
   if (gMarioState->action == ACT_JUMBO_STAR_CUTSCENE || gMarioState->action == ACT_END_PEACH_CUTSCENE || gMarioState->action == ACT_CREDITS_CUTSCENE || gMarioState->action == ACT_END_WAVING_CUTSCENE) {
     // grand star cutscene, both peach cutscenes, credit sequence, cake screen

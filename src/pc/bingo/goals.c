@@ -401,13 +401,13 @@ DEF_GOAL_GROUP(FREESTANDING_STARS, {
 DEF_GOAL_GROUP(EXTRA_LIVES, {
   return config.extraLives;
 },
-  DEF_GOAL( .label = "10\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 10 } )
+  // DEF_GOAL( .label = "10\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 10 } )
   // DEF_GOAL( .label = "11\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 11 } )
   DEF_GOAL( .label = "12\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 12 } )
   // DEF_GOAL( .label = "13\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 13 } )
-  // DEF_GOAL( .label = "14\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 14 } )
-  DEF_GOAL( .label = "15\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 15 } )
-  // DEF_GOAL( .label = "16\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 16 } )
+  DEF_GOAL( .label = "14\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 14 } )
+  // DEF_GOAL( .label = "15\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 15 } )
+  DEF_GOAL( .label = "16\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 16 } )
   // DEF_GOAL( .label = "17\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 17 } )
   DEF_GOAL( .label = "18\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 18 } )
   // DEF_GOAL( .label = "19\nLives", .fn = bingo_have_at_least_N_lives, .args = { .count = 19 } )
