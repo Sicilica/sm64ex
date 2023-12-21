@@ -315,7 +315,9 @@ struct BingoGoalMetric* gBingoMetrics[] = {
   STARSET_METRIC(redCoinStars),
   STARSET_METRIC(raceStars),
   STARSET_METRIC(freestandingStars),
-  &castleStarsMetric,
+  // NOTE Disabling castle stars because it doesn't quite fit on steam deck and
+  // isn't really that useful anyway
+  // &castleStarsMetric,
   STARSET_METRIC(boxStars),
   STARSET_METRIC(bossStars),
   NULL,

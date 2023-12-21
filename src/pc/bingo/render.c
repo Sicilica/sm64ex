@@ -19,13 +19,6 @@
 
 int gBingoBoardFlashTimer;
 
-// ": "
-const u8 COLON_SPACE_STR[] = {
-  0xE6,
-  0x9E,
-  0xFF,
-};
-
 // " of "
 const u8 METRIC_DIVIDER[] = {
     0x9E, 0x32, 0x29, 0x9E,
@@ -179,8 +172,7 @@ void render_fullsize_bingo_board(void) {
             continue;
         }
 
-        print_generic_string(right + 10, top + 30 + 16 * metrics_index, it->mappedLabel);
-        print_generic_string(right + 10 + it->labelWidth, top + 30 + 16 * metrics_index, COLON_SPACE_STR);
+        print_generic_string(right + 5, top + 30 + 16 * metrics_index, it->mappedLabel);
 
         s16 count = onTitle ? 0 : it->currentCount();
 
@@ -195,14 +187,14 @@ void render_fullsize_bingo_board(void) {
         }
 
         s16 offset = 0;
-        print_generic_string(right + 10 + offset + 100 - strWidth, top + 30 + 16 * metrics_index, buffer);
+        print_generic_string(right + 5 + 95 + offset - strWidth, top + 30 + 16 * metrics_index, buffer);
 
         if (it->maximum != NULL) {
             offset += get_string_width(buffer);
-            print_generic_string(right + 10 + offset + 100 - strWidth, top + 30 + 16 * metrics_index, METRIC_DIVIDER);
+            print_generic_string(right + 5 + 95 + offset - strWidth, top + 30 + 16 * metrics_index, METRIC_DIVIDER);
             offset += get_string_width(METRIC_DIVIDER);
             int_to_str(it->maximum, buffer);
-            print_generic_string(right + 10 + offset + 100 - strWidth, top + 30 + 16 * metrics_index, buffer);
+            print_generic_string(right + 5 + 95 + offset - strWidth, top + 30 + 16 * metrics_index, buffer);
         }
 
         metrics_index++;
