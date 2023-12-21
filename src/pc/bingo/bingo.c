@@ -55,7 +55,7 @@ void handle_bingo_input(void) {
     // TODO this should absolutely not be here
     bingo_update_timer();
 
-    if (gPlayer3Controller->buttonDown & L_TRIG) {
+    if (gPlayer1Controller->buttonDown & L_TRIG || gPlayer3Controller->buttonDown & L_TRIG) {
         displayFullsizeBingoBoard = TRUE;
     } else {
         displayFullsizeBingoBoard = FALSE;

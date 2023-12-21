@@ -82,6 +82,7 @@ static const u8 optsBingoStr[][32] = {
     { TEXT_OPT_CFG_BOSS_STARS },
     { TEXT_OPT_CFG_BOX_STARS },
     { TEXT_OPT_CFG_CAP_STAGE_STARS },
+    { TEXT_OPT_CFG_EXTRA_LIVES },
     { TEXT_OPT_CFG_FREESTANDING_STARS },
     { TEXT_OPT_CFG_RACE_STARS },
     { TEXT_OPT_CFG_RED_COIN_STARS },
@@ -258,11 +259,12 @@ static struct Option optsBingo[] = {
     DEF_OPT_TOGGLE( optsBingoStr[1], &gBingoConfig.bossStars),
     DEF_OPT_TOGGLE( optsBingoStr[2], &gBingoConfig.boxStars),
     DEF_OPT_TOGGLE( optsBingoStr[3], &gBingoConfig.capStageStars),
-    DEF_OPT_TOGGLE( optsBingoStr[4], &gBingoConfig.freestandingStars),
-    DEF_OPT_TOGGLE( optsBingoStr[5], &gBingoConfig.raceStars),
-    DEF_OPT_TOGGLE( optsBingoStr[6], &gBingoConfig.redCoinStars),
-    DEF_OPT_TOGGLE( optsBingoStr[7], &gBingoConfig.secretsStars),
-    DEF_OPT_TOGGLE( optsBingoStr[8], &gBingoConfig.slideStars),
+    DEF_OPT_TOGGLE( optsBingoStr[4], &gBingoConfig.extraLives),
+    DEF_OPT_TOGGLE( optsBingoStr[5], &gBingoConfig.freestandingStars),
+    DEF_OPT_TOGGLE( optsBingoStr[6], &gBingoConfig.raceStars),
+    DEF_OPT_TOGGLE( optsBingoStr[7], &gBingoConfig.redCoinStars),
+    DEF_OPT_TOGGLE( optsBingoStr[8], &gBingoConfig.secretsStars),
+    DEF_OPT_TOGGLE( optsBingoStr[9], &gBingoConfig.slideStars),
 };
 
 static struct Option optsControls[] = {

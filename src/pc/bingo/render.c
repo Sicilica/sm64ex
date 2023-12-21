@@ -19,20 +19,17 @@
 
 int gBingoBoardFlashTimer;
 
-// "Total Coins:"
-const u8 TOTAL_COINS_TEXT[] = {
-  0x1D, 0x32, 0x37, 0x24, 0x2F,
-  0x9E,
-  0x0C, 0x32, 0x2C, 0x31, 0x36,
+// ": "
+const u8 COLON_SPACE_STR[] = {
   0xE6,
+  0x9E,
   0xFF,
 };
 
-// "Cannons:"
-const u8 CANNONS_TEXT[] = {
-  0x0C, 0x24, 0x31, 0x31, 0x32, 0x31, 0x36,
-  0xE6,
-  0xFF,
+// " of "
+const u8 METRIC_DIVIDER[] = {
+    0x9E, 0x32, 0x29, 0x9E,
+    0xFF,
 };
 
 void draw_flat_rect(s16 x, s16 y, s16 w, s16 h, u8 r, u8 g, u8 b, u8 a) {
@@ -108,6 +105,44 @@ void render_min_bingo_board(void) {
     render_bingo_board_helper(left, bottom, cell_size, padding, 100);
 }
 
+void int_to_str_4digit(s32 num, u8* dst) {
+    if (num < 1000) {
+        return int_to_str(num, dst);
+    }
+
+    s32 digit1;
+    s32 digit2;
+    s32 digit3;
+    s32 digit4;
+
+    s8 pos = 0;
+
+    if (num > 9999) {
+        dst[0] = 0x00; dst[1] = DIALOG_CHAR_TERMINATOR;
+        return;
+    }
+
+    digit1 = num / 1000;
+    digit2 = (num - digit1 * 1000) / 100;
+    digit3 = ((num - digit1 * 1000) - (digit2 * 100)) / 10;
+    digit4 = (num - digit1 * 1000) - (digit2 * 100) - (digit3 * 10);
+
+    if (digit1 != 0) {
+        dst[pos++] = digit1;
+    }
+
+    if (digit2 != 0 || digit1 != 0) {
+        dst[pos++] = digit2;
+    }
+
+    if (digit3 != 0 || digit2 != 0 || digit1 != 0) {
+        dst[pos++] = digit3;
+    }
+
+    dst[pos++] = digit4;
+    dst[pos] = DIALOG_CHAR_TERMINATOR;
+}
+
 void render_fullsize_bingo_board(void) {
     s16 cell_size = 40;
     s16 padding = 2;
@@ -120,11 +155,15 @@ void render_fullsize_bingo_board(void) {
     for (u8 i = 0; i < 25; i++) {
         u8 x = i % 5;
         u8 y = i / 5;
-        if (gBingoBoard[i].mappedLabel != NULL) {
-            // TODO this comes from ingame_menu.c, but I could extern it...
-            // gDialogCharWidths[gBingoBoard[i].mappedLabel[0]];
+        if (gBingoBoard[i].labelLine1.dialog != NULL) {
             // TODO this 16 offset on Y is for the text height
-            print_generic_string(left + padding + (cell_size + padding) * x, 240 - 16 - (bottom - (padding + cell_size) * (5 - y)), gBingoBoard[i].mappedLabel);
+            // and, the 3 is to center it (technically 4 would be perfectly centered)
+            print_generic_string(left + padding + (cell_size + padding) * x + (cell_size - gBingoBoard[i].labelLine1.width)/2, 240 - 3 - 16 - (bottom - (padding + cell_size) * (5 - y)), gBingoBoard[i].labelLine1.dialog);
+        }
+        if (gBingoBoard[i].labelLine2.dialog != NULL) {
+            // TODO this 32 offset on Y is for the text height
+            // and, the 3 is to center it (technically 4 would be perfectly centered)
+            print_generic_string(left + padding + (cell_size + padding) * x + (cell_size - gBingoBoard[i].labelLine2.width)/2, 240 - 3 - 32 - (bottom - (padding + cell_size) * (5 - y)), gBingoBoard[i].labelLine2.dialog);
         }
     }
 
@@ -132,12 +171,42 @@ void render_fullsize_bingo_board(void) {
     s16 top = bottom - padding * 6 - cell_size * 5;
 
     u8 buffer[8];
-    int_to_str(save_file_get_total_coin_count(gCurrSaveFileNum - 1), buffer);
-    print_generic_string(right + 10, top + 30, TOTAL_COINS_TEXT);
-    print_generic_string(right + 10 + 60, top + 30, buffer);
-    int_to_str(save_file_get_total_cannon_count(gCurrSaveFileNum - 1), buffer);
-    print_generic_string(right + 10, top + 30 + 16, CANNONS_TEXT);
-    print_generic_string(right + 10 + 60, top + 30 + 16, buffer);
+    s16 metrics_index = 0;
+    bool onTitle = get_current_player_location() == LOCATION_TITLE;
+    for (struct BingoGoalMetric** it2 = gBingoMetrics; *it2 != NULL; it2++) {
+        struct BingoGoalMetric* it = (*it2);
+        if (!it->active) {
+            continue;
+        }
+
+        print_generic_string(right + 10, top + 30 + 16 * metrics_index, it->mappedLabel);
+        print_generic_string(right + 10 + it->labelWidth, top + 30 + 16 * metrics_index, COLON_SPACE_STR);
+
+        s16 count = onTitle ? 0 : it->currentCount();
+
+        s16 strWidth = 0;
+        int_to_str_4digit(count, buffer);
+        strWidth += get_string_width(buffer);
+        if (it->maximum != NULL) {
+            strWidth += get_string_width(METRIC_DIVIDER);
+            int_to_str(it->maximum, buffer);
+            strWidth += get_string_width(buffer);
+            int_to_str_4digit(count, buffer);
+        }
+
+        s16 offset = 0;
+        print_generic_string(right + 10 + offset + 100 - strWidth, top + 30 + 16 * metrics_index, buffer);
+
+        if (it->maximum != NULL) {
+            offset += get_string_width(buffer);
+            print_generic_string(right + 10 + offset + 100 - strWidth, top + 30 + 16 * metrics_index, METRIC_DIVIDER);
+            offset += get_string_width(METRIC_DIVIDER);
+            int_to_str(it->maximum, buffer);
+            print_generic_string(right + 10 + offset + 100 - strWidth, top + 30 + 16 * metrics_index, buffer);
+        }
+
+        metrics_index++;
+    }
 
     for (int i = 0; i < BINGO_MAX_PLAYERS; i++) {
         if (gBingoPlayers[i].connected) {

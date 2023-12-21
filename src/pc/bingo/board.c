@@ -25,11 +25,15 @@ void shuffle_bingo_goals(int* goals, int len) {
 void clear_bingo_board(void) {
   gBingoBoardSeed = 0;
   for (int i = 0; i < 25; i++) {
-    if (gBingoBoard[i].mappedLabel != NULL) {
-      free(gBingoBoard[i].mappedLabel);
+    if (gBingoBoard[i].labelLine1.dialog != NULL) {
+      free(gBingoBoard[i].labelLine1.dialog);
+    }
+    if (gBingoBoard[i].labelLine2.dialog != NULL) {
+      free(gBingoBoard[i].labelLine2.dialog);
     }
     gBingoBoard[i].goal = NULL;
-    gBingoBoard[i].mappedLabel = NULL;
+    gBingoBoard[i].labelLine1.dialog = NULL;
+    gBingoBoard[i].labelLine2.dialog = NULL;
   }
 }
 
@@ -72,6 +76,46 @@ bool can_place_goal(struct BingoGoal* goal, int index) {
   return true;
 }
 
+void prepare_goal_label(const char* label, struct BingoBoardCell* out) {
+  char* buf = malloc(sizeof(char) * strlen(label));
+  strcpy(buf, label);
+  int newline;
+  for (newline = 0; buf[newline] != '\0'; newline++) {
+    if (buf[newline] == '\n') {
+      buf[newline] = '\0';
+      newline++;
+      break;
+    }
+  }
+  out->labelLine1.dialog = alloc_and_convert_chars_to_dialog(buf);
+  out->labelLine2.dialog = alloc_and_convert_chars_to_dialog(buf + newline);
+  free(buf);
+
+  out->labelLine1.width = get_string_width(out->labelLine1.dialog);
+  out->labelLine2.width = get_string_width(out->labelLine2.dialog);
+}
+
+void recalculate_bingo_categories(void) {
+  BINGO_LOG("recalculating relevant bingo categories");
+  for (struct BingoGoalMetric** it2 = gBingoMetrics; *it2 != NULL; it2++) {
+    struct BingoGoalMetric* it = (*it2);
+    it->active = FALSE;
+    for (int i = 0; i < 25; i++) {
+      if (it->includesGoal(gBingoBoard[i].goal)) {
+        it->active = TRUE;
+        if (it->mappedLabel == NULL) {
+          it->mappedLabel = alloc_and_convert_chars_to_dialog(it->label);
+          it->labelWidth = get_string_width(it->mappedLabel);
+        }
+        if (it->maximum == NULL && it->calcMaximum != NULL) {
+          it->maximum = it->calcMaximum();
+        }
+        break;
+      }
+    }
+  }
+}
+
 void generate_bingo_board(unsigned int seed, struct BingoConfig config) {
   BINGO_LOG("generating bingo board with seed %u", seed);
 
@@ -98,6 +142,7 @@ void generate_bingo_board(unsigned int seed, struct BingoConfig config) {
   }
   shuffle_bingo_goals(boardIndices, 25);
 
+  // NOTE: Currently, generation doesn't account for difficulty at all
   u8 goalsPlaced = 0;
   for (int i = numPossibleGoals - 1; i >= 0 && goalsPlaced < 25; i--) {
     struct BingoGoal* goal = possibleGoals[goalIndices[i]];
@@ -109,7 +154,7 @@ void generate_bingo_board(unsigned int seed, struct BingoConfig config) {
 
       if (can_place_goal(goal, boardIndices[j])) {
         gBingoBoard[boardIndices[j]].goal = goal;
-        gBingoBoard[boardIndices[j]].mappedLabel = alloc_and_convert_chars_to_dialog(goal->label);
+        prepare_goal_label(goal->label, &gBingoBoard[boardIndices[j]]);
         goalsPlaced++;
         break;
       }
@@ -135,7 +180,7 @@ void generate_bingo_board(unsigned int seed, struct BingoConfig config) {
       }
 
       gBingoBoard[emptySlotIndex].goal = goal;
-      gBingoBoard[emptySlotIndex].mappedLabel = alloc_and_convert_chars_to_dialog(goal->label);
+      prepare_goal_label(goal->label, &gBingoBoard[emptySlotIndex]);
       goalsPlaced++;
     }
     if (goalsPlaced < 25) {
@@ -147,4 +192,6 @@ void generate_bingo_board(unsigned int seed, struct BingoConfig config) {
   free(possibleGoals);
 
   gBingoBoardSeed = seed;
+
+  recalculate_bingo_categories();
 }
