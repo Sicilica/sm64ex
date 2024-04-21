@@ -329,7 +329,7 @@ LEVEL_DIRS := $(patsubst levels/%,%,$(dir $(wildcard levels/*/header.h)))
 
 # Hi, I'm a PC
 SRC_DIRS := src src/engine src/game src/audio src/menu src/buffers actors levels bin data assets src/pc src/pc/gfx src/pc/audio src/pc/controller src/pc/fs src/pc/fs/packtypes
-SRC_DIRS += src/pc/bingo src/pc/bingo/nouveau #src/pc/bingo/offline #src/pc/bingo/discord
+SRC_DIRS += src/pc/bingo src/pc/bingo/nouveau src/pc/bingo/nouveau/json #src/pc/bingo/offline #src/pc/bingo/discord
 ASM_DIRS :=
 
 BIN_DIRS := bin bin/$(VERSION)
@@ -450,18 +450,18 @@ GODDARD_O_FILES := $(foreach file,$(GODDARD_C_FILES),$(BUILD_DIR)/$(file:.c=.o))
 
 RPC_LIBS :=
 DISCORD_SDK_LIBS :=
-ifeq ($(WINDOWS_BUILD),1)
-  ifeq ($(TARGET_BITS), 32)
-    DISCORD_SDK_LIBS := $(DISCORD_LIB_DIR)/x86/discord_game_sdk.dll
-  else
-    DISCORD_SDK_LIBS := $(DISCORD_LIB_DIR)/discord_game_sdk.dll
-  endif
-else ifeq ($(OSX_BUILD),1)
-  # needs testing
-  DISCORD_SDK_LIBS := $(DISCORD_LIB_DIR)/libdiscord_game_sdk.dylib
-else
-  DISCORD_SDK_LIBS := $(DISCORD_LIB_DIR)/libdiscord_game_sdk.so
-endif
+# ifeq ($(WINDOWS_BUILD),1)
+#   ifeq ($(TARGET_BITS), 32)
+#     DISCORD_SDK_LIBS := $(DISCORD_LIB_DIR)/x86/discord_game_sdk.dll
+#   else
+#     DISCORD_SDK_LIBS := $(DISCORD_LIB_DIR)/discord_game_sdk.dll
+#   endif
+# else ifeq ($(OSX_BUILD),1)
+#   # needs testing
+#   DISCORD_SDK_LIBS := $(DISCORD_LIB_DIR)/libdiscord_game_sdk.dylib
+# else
+#   DISCORD_SDK_LIBS := $(DISCORD_LIB_DIR)/libdiscord_game_sdk.so
+# endif
 
 # Automatic dependency files
 DEP_FILES := $(O_FILES:.o=.d) $(ULTRA_O_FILES:.o=.d) $(GODDARD_O_FILES:.o=.d) $(BUILD_DIR)/$(LD_SCRIPT).d
@@ -608,8 +608,8 @@ ifeq ($(NODRAWINGDISTANCE),1)
   CFLAGS += -DNODRAWINGDISTANCE
 endif
 
-CC_CHECK += -DDISCORD_SDK
-CFLAGS += -DDISCORD_SDK
+# CC_CHECK += -DDISCORD_SDK
+# CFLAGS += -DDISCORD_SDK
 
 # Check for texture fix option
 ifeq ($(TEXTURE_FIX),1)
@@ -681,12 +681,12 @@ else
 
 endif # End of LDFLAGS
 
-# network libraries
-ifeq ($(WINDOWS_BUILD),1)
-  LDFLAGS += -Wl,-Bdynamic -ldiscord_game_sdk -Wl,-Bstatic
-else
-  LDFLAGS += -ldiscord_game_sdk -Wl,-rpath . -Wl,-rpath lib/discordsdk
-endif
+# # network libraries
+# ifeq ($(WINDOWS_BUILD),1)
+#   LDFLAGS += -Wl,-Bdynamic -ldiscord_game_sdk -Wl,-Bstatic
+# else
+#   LDFLAGS += -ldiscord_game_sdk -Wl,-rpath . -Wl,-rpath lib/discordsdk
+# endif
 
 # Prevent a crash with -sopt
 export LANG := C
