@@ -3,10 +3,20 @@
 #include "pc/bingo/bingo.h"
 #include "pc/bingo/players.h"
 
+#include "send.h"
+
 void handle_board(cJSON *msg) {
-  cJSON *seed = cJSON_GetObjectItemCaseSensitive(msg, "s");
-  cJSON *config = cJSON_GetObjectItemCaseSensitive(msg, "cfg");
-  NOUVEAU_LOG("BOARD: cfg=%s s=%d", config->valuestring, seed->valueint);
+  int seed = cJSON_GetObjectItemCaseSensitive(msg, "s")->valueint;
+  const char* config = cJSON_GetObjectItemCaseSensitive(msg, "cfg")->valuestring;
+
+  if (config[0] == '\0') {
+    NOUVEAU_LOG("no board detected; requesting new board using our config");
+    bingo_network_request_new_board(0);
+  } else {
+    NOUVEAU_LOG("got board: cfg=%s s=%d", config, seed);
+    struct BingoConfig bingoConfig = bingo_config_from_string(config);
+    generate_bingo_board(seed, bingoConfig);
+  }
 }
 
 void handle_player_connected(cJSON *msg) {
@@ -28,7 +38,7 @@ void handle_player_connected(cJSON *msg) {
   gBingoPlayers[slot].networkInfo = remote_slot;
 
   convert_chars_to_dialog(name, gBingoPlayers[slot].dialogName, BINGO_PLAYER_NAME_MAXLEN);
-  NOUVEAU_LOG("\"%s\" connected in slot %d->%d", slot, remote_slot);
+  NOUVEAU_LOG("\"%s\" connected in slot %d->%d", name, slot, remote_slot);
 }
 
 void handle_player_disconnected(cJSON *msg) {

@@ -6,7 +6,7 @@
 void send_keepalive();
 void send_board_request(const char* config);
 void send_completion(uint32_t completion);
-void send_hello(const char* name);
+void send_hello(const char* name, int preferred_color);
 void send_location(int16_t location);
 
 #endif

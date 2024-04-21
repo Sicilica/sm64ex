@@ -22,7 +22,7 @@ void receive_messages() {
       bingo_network_shutdown();
       break;
     }
-    NOUVEAU_LOG("received %d bytes", rlen);
+    // NOUVEAU_LOG("received %d bytes", rlen);
     leftover_bytes += rlen;
 
     int offset = 0;
@@ -76,7 +76,9 @@ void receive_messages() {
       memset(header, 0x0, 2*sizeof(uint16_t));
     }
     leftover_bytes -= offset;
-    NOUVEAU_LOG("done processing inbounds (%d leftover)", leftover_bytes);
+    if (leftover_bytes != 0) {
+      NOUVEAU_LOG("done processing inbounds (%d leftover)", leftover_bytes);
+    }
     memcpy(recv_buf, recv_buf+offset, leftover_bytes);
   }
 }
