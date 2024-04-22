@@ -11,7 +11,23 @@ void handle_board(cJSON *msg) {
 
   if (config[0] == '\0') {
     NOUVEAU_LOG("no board detected; requesting new board using our config");
+#ifdef _WIN64
+  // Windows: we're currently in non-blocking mode, but send expects to be in blocking mode
+  // (this is because windows requires us to set state on the socket instead of per-call)
+  u_long mode = 1;
+  if (ioctlsocket(sock, FIONBIO, &mode) != 0) {
+    NOUVEAU_ERR("set blocking");
+    return;
+  }
+#endif
     bingo_network_request_new_board(0);
+#ifdef _WIN64
+  mode = 1;
+  if (ioctlsocket(sock, FIONBIO, &mode) != 0) {
+    NOUVEAU_ERR("set non-blocking");
+    return;
+  }
+#endif
   } else {
     NOUVEAU_LOG("got board: cfg=%s s=%d", config, seed);
     struct BingoConfig bingoConfig = bingo_config_from_string(config);

@@ -28,7 +28,7 @@ void load_bingo_config() {
 
   entry = cJSON_GetObjectItemCaseSensitive(obj, HOST_KEY);
   if (cJSON_IsString(entry)) {
-    host = malloc(strlen(entry->valuestring));
+    host = malloc(strlen(entry->valuestring) + 1);
     strcpy(host, entry->valuestring);
   }
 
@@ -39,7 +39,7 @@ void load_bingo_config() {
 
   entry = cJSON_GetObjectItemCaseSensitive(obj, USERNAME_KEY);
   if (cJSON_IsString(entry)) {
-    username = malloc(strlen(entry->valuestring));
+    username = malloc(strlen(entry->valuestring) + 1);
     strcpy(username, entry->valuestring);
   }
 

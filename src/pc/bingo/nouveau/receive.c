@@ -9,17 +9,32 @@ int leftover_bytes = 0;
 uint16_t header[2];
 
 void receive_messages() {
+#ifdef _WIN64
+  u_long mode = 1;
+  if (ioctlsocket(sock, FIONBIO, &mode) != 0) {
+    NOUVEAU_ERR("set non-blocking");
+    return;
+  }
+#endif
   while (TRUE) {
+#ifdef _WIN64
+    int rlen = recv(sock, recv_buf + leftover_bytes, MAX_RECEIVE_SIZE - leftover_bytes, 0);
+#else
     int rlen = recv(sock, recv_buf + leftover_bytes, MAX_RECEIVE_SIZE - leftover_bytes, MSG_DONTWAIT);
+#endif
     if (rlen < 0) {
-      if (errno != 11) {
+#ifdef _WIN64
+      if (WSAGetLastError() != WSAEWOULDBLOCK) {
+#else
+      if (errno != EWOULDBLOCK) {
+#endif
         NOUVEAU_ERR("recv");
-        bingo_network_shutdown();
+        bingo_network_disconnect();
       }
       break;
     } else if (rlen == 0) {
       NOUVEAU_LOG("received 0 bytes; we probably timed out but aren't reporting an error...");
-      bingo_network_shutdown();
+      bingo_network_disconnect();
       break;
     }
     // NOUVEAU_LOG("received %d bytes", rlen);
@@ -49,7 +64,7 @@ void receive_messages() {
       offset += header[1];
       if (body == NULL) {
         NOUVEAU_LOG("failed to parse json!");
-        bingo_network_shutdown();
+        bingo_network_disconnect();
         return;
       }
 
@@ -81,6 +96,13 @@ void receive_messages() {
     }
     memcpy(recv_buf, recv_buf+offset, leftover_bytes);
   }
+#ifdef _WIN64
+  mode = 0;
+  if (ioctlsocket(sock, FIONBIO, &mode) != 0) {
+    NOUVEAU_ERR("set blocking");
+    return;
+  }
+#endif
 }
 
 void reset_receive_buffers() {

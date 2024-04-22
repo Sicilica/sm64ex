@@ -77,7 +77,7 @@ bool can_place_goal(struct BingoGoal* goal, int index) {
 }
 
 void prepare_goal_label(const char* label, struct BingoBoardCell* out) {
-  char* buf = malloc(sizeof(char) * strlen(label));
+  char* buf = malloc(sizeof(char) * strlen(label) + 1);
   strcpy(buf, label);
   int newline;
   for (newline = 0; buf[newline] != '\0'; newline++) {

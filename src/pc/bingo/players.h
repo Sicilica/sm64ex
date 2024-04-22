@@ -5,6 +5,7 @@
 #include "locations.h"
 
 #define BINGO_PLAYER_NAME_MAXLEN 12
+#define BINGO_NUM_COLORS 8
 
 typedef u32 BingoPlayerColor;
 typedef u32 BingoCompletion;

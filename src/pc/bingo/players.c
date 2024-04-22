@@ -3,7 +3,7 @@
 #define BINGO_PLAYER_COLOR(r, g, b) ((((r << 8) + g) << 8) + b)
 
 struct BingoPlayerState gBingoPlayers[BINGO_MAX_PLAYERS];
-BingoPlayerColor bingoPlayerColors[BINGO_MAX_PLAYERS] = {
+BingoPlayerColor bingoPlayerColors[BINGO_NUM_COLORS] = {
   BINGO_PLAYER_COLOR(255, 0, 0),    // RED
   BINGO_PLAYER_COLOR(0, 0, 255),    // BLUE
   BINGO_PLAYER_COLOR(0, 255, 0),    // GREEN

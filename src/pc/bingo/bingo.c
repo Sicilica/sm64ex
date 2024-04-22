@@ -35,6 +35,7 @@ void init_bingo(void) {
 
     bingoInitComplete = TRUE;
 
+    // TODO this is unnecessary because nouveau echoes it instead
     BINGO_MSG("BINGO %s", BINGO_VERSION);
 }
 
