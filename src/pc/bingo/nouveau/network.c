@@ -7,6 +7,7 @@
 #else
 #include <arpa/inet.h>
 #include <netdb.h>
+#define INVALID_SOCKET -1
 #endif
 #include "json/cJSON.h"
 
